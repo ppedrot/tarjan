@@ -183,12 +183,12 @@ refine (
   let ans := UMap.find u g.(entries) in
   match ans as elt return
     match elt with
-    | None => True
-    | Some n => UMap.MapsTo u n g.(ugraph).(entries)
+    | None => ~ UMap.In u g.(entries)
+    | Some n => UMap.MapsTo u n g.(entries)
     end -> _
   with
   | None =>
-    fun _ =>
+    fun rw =>
     let can :=
       {| univ := u;
         lt := USet.empty;
@@ -197,20 +197,21 @@ refine (
         rank := 0;
 (*         predicative = Level.is_set u; *)
         klvl := 0;
-        ilvl := 0
+        ilvl := g.(index)
       |}
     in
     let g := {|
-      index := g.(index);
+      index := N.pred g.(index);
       entries := UMap.add u (Canonical can) g.(entries);
       n_nodes := N.succ g.(n_nodes);
       n_edges := g.(n_edges)
     |} in
-    _
+    ({| ugraph := g |}, can)
   | Some (Equiv v) => fun rw => (g, repr g v (g.(ueq_complete) u _ rw))
   | Some (Canonical c) => fun _ => (g, c)
   end _
 ).
++ unfold g.
 Defined.
 
 (*
