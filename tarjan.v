@@ -17,7 +17,7 @@ Record canonical_node :=
   le: USet.t;
   gtge: USet.t;
   rank : N;
-  predicative : bool;
+(*   predicative : bool; *)
   klvl: N;
   ilvl: N
 }.
@@ -100,7 +100,7 @@ let check_universes_invariants g =
 *)
 
 Record Universes := {
-  ugraph : universes;
+  ugraph :> universes;
   ult_trans_wf : well_founded (fun u v => clos_trans _ (ult_step ugraph) v u);
   ueq_complete : forall u v, UMap.MapsTo u (Equiv v) ugraph.(entries) -> UMap.In v ugraph.(entries)
 }.
@@ -139,11 +139,10 @@ let change_node g n =
         g.entries }
 *)
 
-Definition repr (g : Universes) (u : Level.t) (m : UMap.In u g.(ugraph).(entries)) : canonical_node.
+Definition repr (g : Universes) (u : Level.t) (m : UMap.In u g.(entries)) : canonical_node.
 Proof.
 refine (
-  let (g, wf, complete) := g in
-  Fix wf (fun u => UMap.In u g.(entries) -> _)
+  Fix g.(ult_trans_wf) (fun u => UMap.In u g.(entries) -> _)
   (fun u repr m =>
     let ans := UMap.find u g.(entries) in
     match ans as elt return
@@ -160,7 +159,7 @@ refine (
   u m
 ).
 + apply t_step, ult_step_eq, rw.
-+ eapply complete, rw.
++ eapply g.(ueq_complete), rw.
 + remember ans as elt; destruct elt as [v|].
   - apply UMap.find_2; symmetry; assumption.
   - intros [v Hv]; apply UMap.find_1 in Hv; unfold ans in *; exfalso; congruence.
@@ -177,18 +176,41 @@ Defined.
 
 (* [safe_repr] is like [repr] but if the graph doesn't contain the
    searched universe, we add it. *)
-Definition safe_repr (g : universes) (G : Universes g) (u : Level.t) :
-  universes canonical_node *  :=
-  match UMap.find u g.(entries) as elt return
+Definition safe_repr (g : Universes) (u : Level.t) :
+  Universes * canonical_node.
+Proof.
+refine (
+  let ans := UMap.find u g.(entries) in
+  match ans as elt return
     match elt with
     | None => True
-    | Some n => UMap.MapsTo u n g.(entries)
+    | Some n => UMap.MapsTo u n g.(ugraph).(entries)
     end -> _
   with
-  | None => _
-  | Some (Equiv v) => _
-  | Some (Canonical c) =>
+  | None =>
+    fun _ =>
+    let can :=
+      {| univ := u;
+        lt := USet.empty;
+        le := USet.empty;
+        gtge := USet.empty;
+        rank := 0;
+(*         predicative = Level.is_set u; *)
+        klvl := 0;
+        ilvl := 0
+      |}
+    in
+    let g := {|
+      index := g.(ugraph).(index);
+      entries := UMap.add u (Canonical can) g.(ugraph).(entries);
+      n_nodes := N.succ g.(ugraph).(n_nodes)
+    |} in
+    _
+  | Some (Equiv v) => fun rw => (g, repr g v _)
+  | Some (Canonical c) => fun _ => (g, c)
   end _
+).
+Defined.
 
 (*
 let rec safe_repr g u =
