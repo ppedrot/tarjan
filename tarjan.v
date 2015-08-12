@@ -201,12 +201,13 @@ refine (
       |}
     in
     let g := {|
-      index := g.(ugraph).(index);
-      entries := UMap.add u (Canonical can) g.(ugraph).(entries);
-      n_nodes := N.succ g.(ugraph).(n_nodes)
+      index := g.(index);
+      entries := UMap.add u (Canonical can) g.(entries);
+      n_nodes := N.succ g.(n_nodes);
+      n_edges := g.(n_edges)
     |} in
     _
-  | Some (Equiv v) => fun rw => (g, repr g v _)
+  | Some (Equiv v) => fun rw => (g, repr g v (g.(ueq_complete) u _ rw))
   | Some (Canonical c) => fun _ => (g, c)
   end _
 ).
