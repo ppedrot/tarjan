@@ -1,20 +1,25 @@
-Require FMaps.
-Require NArith.
-Require Import BinNat.
+Require FSets FMaps NArith Wellfounded.
+Require Import BinNat Relations.
 
-Declare Module Level : OrderedType.OrderedType.
+Set Primitive Projections.
+
+Module Univ
+  (Level : OrderedType.OrderedType)
+  (UMap : FMapInterface.Sfun(Level))
+  (USet : FSetInterface.Sfun(Level))
+.
 
 Inductive status := NoMark | Visited | WeakVisited | ToMerge.
 
 Record canonical_node :=
 { univ: Level.t;
-  lt: list Level.t;
-  le: list Level.t;
-  gtge: list Level.t;
-  rank : nat;
+  lt: USet.t;
+  le: USet.t;
+  gtge: USet.t;
+  rank : N;
   predicative : bool;
-  klvl: nat;
-  ilvl: nat
+  klvl: N;
+  ilvl: N
 }.
 
 Definition big_rank : N := 10000.
@@ -26,91 +31,37 @@ Inductive univ_entry :=
 | Canonical : canonical_node -> univ_entry
 | Equiv : Level.t -> univ_entry.
 
-Declare Module UMap : FMapInterface.Sfun(Level).
-
 Record universes :=
   { entries : UMap.t univ_entry;
     index : N;
     n_nodes : N; n_edges : N }.
 
-(* Low-level function : makes u an alias for v.
-   Does not removes edges from n_edges, but decrements n_nodes.
-   u should be entered as canonical before.  *)
-let enter_equiv g u v =
-  { entries =
-      UMap.modify u (fun _ a ->
-        match a with
-        | Canonical n ->
-          n.status <- NoMark;
-          Equiv v
-        | _ -> assert false) g.entries;
-    index = g.index;
-    n_nodes = g.n_nodes - 1;
-    n_edges = g.n_edges }
+Inductive ueq_step (g : universes) : Level.t -> Level.t -> Prop :=
+| ueq_step_eq : forall u v,
+  UMap.MapsTo u (Equiv v) g.(entries) ->
+  ueq_step g u v.
 
-(* Low-level function : changes data associated with a canonical node.
-   Resets the mutable fields in the old record, in order to avoid breaking
-   invariants for other users of this record.
-   n.univ should already been inserted as a canonical node. *)
-let change_node g n =
-  { g with entries =
-      UMap.modify n.univ
-        (fun _ a ->
-          match a with
-          | Canonical n' ->
-            n'.status <- NoMark;
-            Canonical n
-          | _ -> assert false)
-        g.entries }
+Inductive ule_step (g : universes) : Level.t -> Level.t -> Prop :=
+| ule_step_le : forall u v n,
+  UMap.MapsTo u (Canonical n) g.(entries) ->
+  USet.In v n.(le) ->
+  ule_step g u v
+| ule_step_eq : forall u v,
+  UMap.MapsTo u (Equiv v) g.(entries) ->
+  ule_step g u v.
 
-(* repr : universes -> Level.t -> canonical_arc *)
-(* canonical representative : we follow the Equiv links *)
-let rec repr g u =
-  let a =
-    try UMap.find u g.entries
-    with Not_found -> anomaly ~label:"Univ.repr"
-        (str"Universe " ++ Level.pr u ++ str" undefined")
-  in
-  match a with
-  | Equiv v -> repr g v
-  | Canonical arc -> arc
-
-(* Reindexes the given universe, using the next available index. *)
-let use_index g u =
-  let u = repr g u in
-  let g = change_node g { u with ilvl = g.index } in
-  assert (g.index > min_int);
-  { g with index = g.index - 1 }
-
-(* [safe_repr] is like [repr] but if the graph doesn't contain the
-   searched universe, we add it. *)
-let rec safe_repr g u =
-  let rec safe_repr_rec entries u =
-    match UMap.find u entries with
-    | Equiv v -> safe_repr_rec entries v
-    | Canonical arc -> arc
-  in
-  try g, safe_repr_rec g.entries u
-  with Not_found ->
-    let can =
-      { univ = u;
-        lt = []; le = []; gtge = [];
-        rank = if Level.is_small u then big_rank else 0;
-        predicative = Level.is_set u;
-        klvl = 0; ilvl = 0;
-        status = NoMark }
-    in
-    let g = { g with
-      entries = UMap.add u (Canonical can) g.entries;
-      n_nodes = g.n_nodes + 1 }
-    in
-    let g = use_index g u in
-    g, repr g u
-
-(* [idx_of_can u] returns a pair of integers. Using lexicographical order
-   over this pair for different nodes can be used to know the relative
-   position of both nodes in the topological order. *)
-let idx_of_can u = u.klvl, u.ilvl
+Inductive ult_step (g : universes) : Level.t -> Level.t -> Prop :=
+| ult_step_le : forall u v n,
+  UMap.MapsTo u (Canonical n) g.(entries) ->
+  USet.In v n.(le) ->
+  ult_step g u v
+| ult_step_lt : forall u v n,
+  UMap.MapsTo u (Canonical n) g.(entries) ->
+  USet.In v n.(lt) ->
+  ult_step g u v
+| ult_step_eq : forall u v,
+  UMap.MapsTo u (Equiv v) g.(entries) ->
+  ult_step g u v.
 
 (*
 let check_universes_invariants g =
@@ -147,6 +98,127 @@ let check_universes_invariants g =
   assert (!n_edges = g.n_edges);
   assert (!n_nodes = g.n_nodes)
 *)
+
+Record Universes := {
+  ugraph : universes;
+  ult_trans_wf : well_founded (fun u v => clos_trans _ (ult_step ugraph) v u);
+  ueq_complete : forall u v, UMap.MapsTo u (Equiv v) ugraph.(entries) -> UMap.In v ugraph.(entries)
+}.
+
+(* Low-level function : makes u an alias for v.
+   Does not removes edges from n_edges, but decrements n_nodes.
+   u should be entered as canonical before.  *)
+(*
+let enter_equiv g u v =
+  { entries =
+      UMap.modify u (fun _ a ->
+        match a with
+        | Canonical n ->
+          n.status <- NoMark;
+          Equiv v
+        | _ -> assert false) g.entries;
+    index = g.index;
+    n_nodes = g.n_nodes - 1;
+    n_edges = g.n_edges }
+*)
+
+(* Low-level function : changes data associated with a canonical node.
+   Resets the mutable fields in the old record, in order to avoid breaking
+   invariants for other users of this record.
+   n.univ should already been inserted as a canonical node. *)
+(*
+let change_node g n =
+  { g with entries =
+      UMap.modify n.univ
+        (fun _ a ->
+          match a with
+          | Canonical n' ->
+            n'.status <- NoMark;
+            Canonical n
+          | _ -> assert false)
+        g.entries }
+*)
+
+Definition repr (g : Universes) (u : Level.t) (m : UMap.In u g.(ugraph).(entries)) : canonical_node.
+Proof.
+refine (
+  let (g, wf, complete) := g in
+  Fix wf (fun u => UMap.In u g.(entries) -> _)
+  (fun u repr m =>
+    let ans := UMap.find u g.(entries) in
+    match ans as elt return
+      match elt with
+      | None => ~ UMap.In u g.(entries)
+      | Some n => UMap.MapsTo u n g.(entries)
+      end -> _
+    with
+    | None => fun rw => False_rect _ (rw m)
+    | Some (Canonical c) => fun _ => c
+    | Some (Equiv v) => fun rw => repr v _ _
+    end _
+  )
+  u m
+).
++ apply t_step, ult_step_eq, rw.
++ eapply complete, rw.
++ remember ans as elt; destruct elt as [v|].
+  - apply UMap.find_2; symmetry; assumption.
+  - intros [v Hv]; apply UMap.find_1 in Hv; unfold ans in *; exfalso; congruence.
+Defined.
+
+(* Reindexes the given universe, using the next available index. *)
+(* let use_index g u =
+  let u = repr g u in
+  let g = change_node g { u with ilvl = g.index } in
+  assert (g.index > min_int);
+  { g with index = g.index - 1 }
+*)
+
+
+(* [safe_repr] is like [repr] but if the graph doesn't contain the
+   searched universe, we add it. *)
+Definition safe_repr (g : universes) (G : Universes g) (u : Level.t) :
+  universes canonical_node *  :=
+  match UMap.find u g.(entries) as elt return
+    match elt with
+    | None => True
+    | Some n => UMap.MapsTo u n g.(entries)
+    end -> _
+  with
+  | None => _
+  | Some (Equiv v) => _
+  | Some (Canonical c) =>
+  end _
+
+(*
+let rec safe_repr g u =
+  let rec safe_repr_rec entries u =
+    match UMap.find u entries with
+    | Equiv v -> safe_repr_rec entries v
+    | Canonical arc -> arc
+  in
+  try g, safe_repr_rec g.entries u
+  with Not_found ->
+    let can =
+      { univ = u;
+        lt = []; le = []; gtge = [];
+        rank = if Level.is_small u then big_rank else 0;
+        predicative = Level.is_set u;
+        klvl = 0; ilvl = 0;
+        status = NoMark }
+    in
+    let g = { g with
+      entries = UMap.add u (Canonical can) g.entries;
+      n_nodes = g.n_nodes + 1 }
+    in
+    let g = use_index g u in
+    g, repr g u
+*)
+
+(* [idx_of_can u] returns a pair of integers. Using lexicographical order
+   over this pair for different nodes can be used to know the relative
+   position of both nodes in the topological order. *)
+let idx_of_can u = u.klvl, u.ilvl
 
 (* [get_ltle] and [get_gtge] return ltle and gtge arcs.
    Moreover, if one of these lists is dirty (e.g. points to a
@@ -405,10 +477,6 @@ let insert_edge strict ucan vcan g =
         change_node g v
   with
   | CycleDetected as e -> raise e
-  | e ->
-    (** Unlikely event: fatal error or signal *)
-    let () = cleanup_universes g in
-    raise e
 
 type constraint_type = Lt | Le | Eq
 
