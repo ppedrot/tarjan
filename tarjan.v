@@ -371,7 +371,10 @@ refine (
     (ltle, n, {| ugraph := g |})
   else (n.(Univ.ltle), n, g)
 ).
-+ apply 
++ intros u.
+  assert (Hwf := g0.(ult_trans_wf) u).
+  induction Hwf as [u Hu IH].
+  
 Defined.
 
 (* [get_ltle] and [get_gtge] return ltle and gtge arcs.
