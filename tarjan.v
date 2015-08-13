@@ -586,12 +586,6 @@ let insert_edge strict ucan vcan g =
           { (change_node g { u with ltle = LMap.add v.univ strict u.ltle })
             with n_edges = g.n_edges + 1 }
       in
-      let v, g =
-        if not u.predicative || v.predicative then v, g
-        else
-          let v = { v with predicative = true } in
-          v, change_node g v
-      in
       if u.klvl <> v.klvl || LSet.mem u.univ v.gtge then g
       else
         let v = { v with gtge = LSet.add u.univ v.gtge } in
