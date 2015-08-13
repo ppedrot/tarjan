@@ -286,6 +286,11 @@ refine (
     destruct Hlt.
     { eapply ult_step_lt; [|eassumption]; eapply UMap.add_3 in H; eassumption. }
     { eapply ult_step_eq; [eassumption|]; eapply UMap.add_3 in H0; eassumption. }
++ clear - g0; intros v n Hv.
+  apply F.add_mapsto_iff in Hv; destruct Hv as [Hv|Hv].
+  - replace n with can in * by intuition congruence.
+    unfold can, canonical; cbn; now intuition.
+  - apply g0.(ueq_canonical); now intuition.
 + remember ans as elt; destruct elt; [apply UMap.find_2; intuition|apply F.not_find_in_iff; intuition].
 Defined.
 
