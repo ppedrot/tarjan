@@ -307,7 +307,7 @@ match (u.(klvl) ?= v.(klvl))%N with
 | Eq => (u.(ilvl) ?= v.(ilvl))%N
 end.
 
-Definition elements_dep {A} (m : UMap.t A) : list {p : UMap.key * A | match p with (k, x) => UMap.MapsTo k x m end}.
+(* Definition map_elements_dep {A} (m : UMap.t A) : list {p : UMap.key * A | match p with (k, x) => UMap.MapsTo k x m end}.
 Proof.
 pose (l := UMap.elements m).
 assert (Hin := @UMap.elements_2 _ m).
@@ -319,26 +319,98 @@ clearbody l; revert Hin; induction l as [|x l IHl]; intros Hin.
   - clear - Hin; intros y l' Hy; apply Hin.
     apply SetoidList.InA_cons_tl, Hy.
 Defined.
+ *)
+
+Lemma map_fold_strong_1 : forall A (m : UMap.t A) x l,
+  (forall y e, SetoidList.InA (UMap.eq_key_elt (elt:=A)) (y, e) (x :: l) -> UMap.MapsTo y e m) ->
+  UMap.MapsTo (fst x) (snd x) m.
+Proof.
+intros; destruct x; apply H; constructor; reflexivity.
+Qed.
+
+Lemma map_fold_strong_2 : forall A (m : UMap.t A) x l,
+  (forall y e, SetoidList.InA (UMap.eq_key_elt (elt:=A)) (y, e) (x :: l) -> UMap.MapsTo y e m) ->
+  forall (y : UMap.key) (e : A),
+  SetoidList.InA (UMap.eq_key_elt (elt:=A)) (y, e) l -> UMap.MapsTo y e m.
+Proof.
+intros; apply H, SetoidList.InA_cons_tl, H0.
+Qed.
 
 (** Inefficient, but UMap does not feature the right interface *)
 Definition map_fold_strong {A B} (m : UMap.t A)
   (f : forall (k : UMap.key) (x : A), UMap.MapsTo k x m -> B -> B)
+  (i : B) : B.
+Proof.
+pose (l := UMap.elements m).
+assert (Hin := @UMap.elements_2 _ m).
+fold l in Hin.
+clearbody l; revert Hin; induction l as [|x l IHl]; intros Hin.
++ exact i.
++ refine (f (fst x) (snd x) _ (IHl _)).
+  - eapply map_fold_strong_1; eassumption.
+  - eapply map_fold_strong_2; eassumption.
+Defined.
+
+(* Definition map_fold_strong {A B} (m : UMap.t A)
+  (f : forall (k : UMap.key) (x : A), UMap.MapsTo k x m -> B -> B)
   (i : B) : B :=
-    List.fold_right (fun p accu => match p with exist _ (x, k) p => f x k p accu end) i (elements_dep m).
+    List.fold_right (fun p accu => match p with exist _ (x, k) p => f x k p accu end) i (map_elements_dep m).
+ *)
+
+Lemma map_fold_strong_rec : forall {A B P}
+  (f : forall m (k : UMap.key) (x : A), UMap.MapsTo k x m -> B -> B)
+  (i : B),
+  (forall m1 m2, UMap.Equal m1 m2 -> forall k x p q accu, f m1 k x p accu = f m2 k x q accu) ->
+  (forall m, UMap.Empty m -> P m i) ->
+  (forall m m' k x p accu, Add k x m m' -> P m accu -> P m' (f m' k x p accu)) ->
+  forall m, P m (map_fold_strong m (f m) i).
+Proof.
+intros A B P f i Hf H0 HS m.
+set 
+unfold map_fold_strong.
+set (p := UMap.elements_2 (m := m)) in *; clearbody p.
+set (l := UMap.elements m) in *.
+let t := match goal with [ |- P m ?F ] => F end in set (phi := t) in *.
+assert (Hrw : l = UMap.elements m) by reflexivity.
+clearbody l.
+set (p1 := map_fold_strong_1 A m) in *; clearbody p1.
+set (p2 := map_fold_strong_2 A m) in *; clearbody p2.
+let t := eval red in phi in
+let t := match t with [ |- list_re ] => F end in set (phi := t) in *.
+
+pattern m in phi at 5.
+
+
+clearbody l; revert m p Hrw.
+induction l as [|[k x] l IHl]; intros m p Hrw; cbn in *.
++ subst; cbn; apply H0.
+  eapply elements_Empty; intuition.
++ subst; cbn in *.
+  eapply HS.
+admit.
+eapply IHl.
+
+[|eapply IHl].
+ apply IHl.
+Qed.
+
+Definition set_elements_dep (m : USet.t) : list {x : USet.elt | USet.In x m}.
+Proof.
+pose (l := USet.elements m).
+assert (Hin := @USet.elements_2 m).
+fold l in Hin.
+clearbody l; revert Hin; induction l as [|x l IHl]; intros Hin.
++ exact nil.
++ refine (cons (exist _ x _) (IHl _)).
+  - clear - Hin; apply Hin; constructor; reflexivity.
+  - clear - Hin; intros y Hy; apply Hin.
+    apply SetoidList.InA_cons_tl, Hy.
+Defined.
 
 Definition set_fold_strong {A} (m : USet.t)
   (f : forall (k : USet.elt), USet.In k m -> A -> A)
-  (i : A) : A.
-Proof.
-refine (
-  USet.fold (fun k accu =>
-    let ans := USet.mem k m in
-    match ans as elt return ans = elt -> A with
-    | false => fun _ => accu
-    | true => fun H => f k (USet.mem_2 H) accu
-    end eq_refl) m i
-).
-Defined.
+  (i : A) : A :=
+    List.fold_right (fun p accu => match p with exist _ x p => f x p accu end) i (set_elements_dep m).
 
 Definition clean_ltle (g : Universes) (ltle : UMap.t bool)
   (m : forall u, UMap.In u ltle -> UMap.In u g.(entries)) : UMap.t bool * bool.
@@ -366,13 +438,12 @@ Lemma clean_ltle_spec : forall g ltle m,
 .
 Proof.
 intros g us m ans.
-unfold clean_ltle, map_fold_strong in ans.
-let t := eval red in ans in match t with UMap.fold ?F _ _ => set (f := F) in * end.
-pattern us in f.
-let t := eval red in f in match t with pattern  end.
-pattern ans.
-apply fold_rec_nodep.
 
+unfold clean_ltle in ans.
+let t := eval red in ans in match t with map_fold_strong us ?F _ => set (f := F) in * end.
+unfold ans; clear ans.
+pattern (map_fold_strong us f (us, false)).
+apply map_fold_strong_rec; cbn in *.
 
 Qed.
 
