@@ -235,12 +235,19 @@ refine (
       n_nodes := N.succ g.(n_nodes);
       n_edges := g.(n_edges)
     |} in
+    let Hltu : forall v, ~ ult_step g.(entries) u v := _ in
     ({| ugraph := g |}, can)
   | Some (Equiv v) => fun rw => (g, repr g v _)
   | Some (Canonical c) => fun _ => (g, c)
   end _
 ).
 + eapply g.(ult_complete); [|eexists; apply rw]; eapply ult_step_eq, rw; reflexivity.
++ intros v Hv.
+  destruct Hv as [n Hu Hv|z Heq Hv].
+  - apply UMapFacts.F.add_mapsto_iff in Hu; destruct Hu; [|now intuition].
+    replace n with can in * by intuition congruence.
+    apply -> UMapFacts.F.empty_in_iff in Hv; assumption.
+  - apply UMapFacts.F.add_mapsto_iff in Hv; destruct Hv; intuition (eauto || congruence).
 + apply Transitive_Closure.wf_clos_trans.
   assert (Hwf : well_founded (Basics.flip (ult_step (entries g0)))).
   { eapply Inclusion.wf_incl; [|eapply g0.(ult_trans_wf)].
@@ -248,16 +255,7 @@ refine (
   unfold g in *; cbn; clear g; intros v.
   specialize (Hwf v); induction Hwf as [v Hv IH]; constructor; intros w Hw.
   destruct (Level.eq_dec u v) as [Hrw|Hd].
-  - rewrite <- Hrw in Hw; clear - rw Hw; exfalso.
-    destruct Hw as [n Hu Hw|v Heq Hw].
-    {
-      apply UMapFacts.F.add_mapsto_iff in Hu; destruct Hu; [|now intuition].
-      replace n with can in * by intuition congruence.
-      apply -> UMapFacts.F.empty_in_iff in Hw; assumption.
-    }
-    {
-      apply UMapFacts.F.add_mapsto_iff in Hw; destruct Hw; intuition (eauto || congruence).
-    }
+  - rewrite <- Hrw in Hw; eelim Hltu; eassumption.
   - apply IH; clear - Hw Hd.
     destruct Hw as [n Hv Hw|z Heq Hv].
     { apply UMap.add_3 in Hv; [|assumption].
@@ -271,7 +269,8 @@ refine (
   - rewrite <- Hrw; eapply UMapFacts.F.add_in_iff; intuition.
   - apply F.add_neq_in_iff; [assumption|].
     assert (Hc : ~ Level.eq u v).
-    { intros Hrw.
+    { intros Hrw; eelim Hltu; rewrite Hrw; eassumption. }
+
     eapply g0.(ult_complete); [|].
 
   destruct (F.In_dec (entries g) w) as [Hw|]; [assumption|exfalso]. 
