@@ -130,7 +130,7 @@ let check_universes_invariants g =
 
 Record Universes := {
   ugraph :> universes;
-  ult_trans_wf : well_founded (clos_trans _ (fun u v => ult_step ugraph.(entries) v u));
+  ult_trans_wf : well_founded (clos_trans _ (Basics.flip (ult_step ugraph.(entries))));
   ult_complete : forall u v, ult_step ugraph.(entries) u v -> UMap.In u ugraph.(entries) -> UMap.In v ugraph.(entries)
 }.
 
@@ -242,30 +242,30 @@ refine (
 ).
 + eapply g.(ult_complete); [|eexists; apply rw]; eapply ult_step_eq, rw; reflexivity.
 + apply Transitive_Closure.wf_clos_trans.
-  assert (Hwf : well_founded (fun u v : Level.t => ult_step (entries g0) v u)).
+  assert (Hwf : well_founded (Basics.flip (ult_step (entries g0)))).
   { eapply Inclusion.wf_incl; [|eapply g0.(ult_trans_wf)].
     apply Transitive_Closure.incl_clos_trans. }
   unfold g in *; cbn; clear g; intros v.
-  destruct (Level.eq_dec u v).
-  - constructor; intros w Hw; exfalso.
+  destruct (Level.eq_dec u v) as [Hrw|Hd].
+  - rewrite <- Hrw; clear v Hrw.
+    constructor; intros w Hw; exfalso.
     induction Hw.
     {
-      apply UMapFacts.F.add_mapsto_iff in H; destruct H; [|intuition congruence].
+      apply UMapFacts.F.add_mapsto_iff in H; destruct H; [|now intuition].
       replace n with can in * by intuition congruence.
       apply -> UMapFacts.F.empty_in_iff in H0; assumption.
     }
     {
-      apply UMapFacts.F.add_mapsto_iff in H0; destruct H0; intuition congruence.
+      apply UMapFacts.F.add_mapsto_iff in H0; destruct H0; intuition (eauto || congruence).
     }
   - specialize (Hwf v).
     induction Hwf as [v Hv IH]; constructor; intros w Hw.
     assert (Hp : ult_step (entries g0) v w).
     {
-      clear - Hw n rw.
 admit.
     }
-    assert (Hd : ~ Level.eq u w).
-    { clear - Hw n rw; intros Hrw.
+    assert (Hd2 : ~ Level.eq u w).
+    { clear - Hw Hd rw; intros Hrw.
       inversion Hw; subst; clear Hw.
       + apply UMap.add_3 in H; [|assumption].
         elim rw; eapply g0.(ult_complete); [|econstructor; exact H].
