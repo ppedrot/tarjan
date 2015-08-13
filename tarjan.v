@@ -284,8 +284,8 @@ match (u.(klvl) ?= v.(klvl))%N with
 | Eq => (u.(ilvl) ?= v.(ilvl))%N
 end.
 
-(*
-Definition fold_strong {A B} (m : UMap.t A)
+(** Inefficient, but UMap does not feature the right interface *)
+Definition map_fold_strong {A B} (m : UMap.t A)
   (f : forall (k : UMap.key) (x : A), UMap.MapsTo k x m -> B -> B)
   (i : B) : B.
 Proof.
@@ -297,27 +297,28 @@ refine (
     | Some v => fun H => f k v (UMap.find_2 H) accu
     end eq_refl) m i
 ).
-Qed.
-*)
+Defined.
 
-(** Inefficient *)
-Definition clean_ltle (g : Universes) (ltle : UMap.t bool) : UMap.t bool * bool.
+Definition set_fold_strong {A} (m : USet.t)
+  (f : forall (k : USet.elt), USet.In k m -> A -> A)
+  (i : A) : A.
 Proof.
 refine (
-  let fold u strict accu :=
-    (** Inefficient, but UMap does not feature the right interface *)
-    let v :=
-      let ans := UMap.find u g.(entries) in
-      match UMap.find u g.(entries) as elt return
-        match elt with
-        | None => True
-        | Some _ => UMap.In u g.(entries)
-        end -> _
-      with
-      | None => fun _ => u
-      | Some _ => fun p => (repr g u p).(univ)
-      end _
-    in
+  USet.fold (fun k accu =>
+    let ans := USet.mem k m in
+    match ans as elt return ans = elt -> A with
+    | false => fun _ => accu
+    | true => fun H => f k (USet.mem_2 H) accu
+    end eq_refl) m i
+).
+Defined.
+
+Definition clean_ltle (g : Universes) (ltle : UMap.t bool)
+  (m : forall u, UMap.In u ltle -> UMap.In u g.(entries)) : UMap.t bool * bool.
+Proof.
+refine (
+  let fold u strict p accu :=
+    let v := (repr g u _).(univ) in
     match Level.compare u v with
     | OrderedType.EQ _ => accu
     | _ =>
@@ -326,12 +327,33 @@ refine (
       else (UMap.add v strict accu, true)
     end
   in
-  UMap.fold fold ltle (ltle, false)
+  fold_strong ltle fold (ltle, false)
 ).
-+ remember (UMap.find u (entries g)) as elt.
-  destruct elt as [n|]; [exists n; apply UMap.find_2; congruence|trivial].
++ apply m; exists strict; assumption.
 Defined.
 
+Definition clean_gtge (g : Universes) (gtge : USet.t)
+  (m : forall u, USet.In u gtge -> UMap.In u g.(entries)) : USet.t * bool.
+Proof.
+refine (
+  let fold u strict p accu :=
+    let v := (repr g u _).(univ) in
+    match Level.compare u v with
+    | OrderedType.EQ _ => accu
+    | _ => (USet.add v (USet.remove u (fst accu)), true)
+    end
+  in
+  fold_strong gtge fold (gtge, false)
+).
++ apply m; exists strict; assumption.
+Defined.
+
+let clean_gtge g gtge =
+  LSet.fold (fun u acc ->
+      let uu = (repr g u).univ in
+      if Level.equal uu u then acc
+      else LSet.add uu (LSet.remove u (fst acc)), true)
+    gtge (gtge, false)
 End Univ.
 
 Extraction Univ.
@@ -366,13 +388,6 @@ let check_universes_invariants g =
     g.entries;
   assert (!n_edges = g.n_edges);
   assert (!n_nodes = g.n_nodes)
-
-let clean_gtge g gtge =
-  LSet.fold (fun u acc ->
-      let uu = (repr g u).univ in
-      if Level.equal uu u then acc
-      else LSet.add uu (LSet.remove u (fst acc)), true)
-    gtge (gtge, false)
 
 (* [get_ltle] and [get_gtge] return ltle and gtge arcs.
    Moreover, if one of these lists is dirty (e.g. points to a
