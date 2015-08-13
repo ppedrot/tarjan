@@ -327,7 +327,7 @@ refine (
       else (UMap.add v strict accu, true)
     end
   in
-  fold_strong ltle fold (ltle, false)
+  map_fold_strong ltle fold (ltle, false)
 ).
 + apply m; exists strict; assumption.
 Defined.
@@ -336,16 +336,16 @@ Definition clean_gtge (g : Universes) (gtge : USet.t)
   (m : forall u, USet.In u gtge -> UMap.In u g.(entries)) : USet.t * bool.
 Proof.
 refine (
-  let fold u strict p accu :=
+  let fold u strict accu :=
     let v := (repr g u _).(univ) in
     match Level.compare u v with
     | OrderedType.EQ _ => accu
     | _ => (USet.add v (USet.remove u (fst accu)), true)
     end
   in
-  fold_strong gtge fold (gtge, false)
+  set_fold_strong gtge fold (gtge, false)
 ).
-+ apply m; exists strict; assumption.
++ apply m; assumption.
 Defined.
 
 let clean_gtge g gtge =
