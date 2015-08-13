@@ -101,7 +101,7 @@ let check_universes_invariants g =
 
 Record Universes := {
   ugraph :> universes;
-  ult_trans_wf : well_founded (fun u v => clos_trans _ (ult_step ugraph.(entries)) v u);
+  ult_trans_wf : well_founded (clos_trans _ (fun u v => ult_step ugraph.(entries) v u));
   ult_complete : forall u v, ult_step ugraph.(entries) u v -> UMap.In u ugraph.(entries) -> UMap.In v ugraph.(entries)
 }.
 
@@ -212,11 +212,14 @@ refine (
   end _
 ).
 + eapply g.(ult_complete); [|eexists; apply rw]; eapply ult_step_eq, rw.
-+ unfold g in *; cbn; clear g; intros v.
++ apply Transitive_Closure.wf_clos_trans.
+  assert (Hwf : well_founded (fun u v : Level.t => ult_step (entries g0) v u)).
+  { eapply Inclusion.wf_incl; [|eapply g0.(ult_trans_wf)].
+    apply Transitive_Closure.incl_clos_trans. }
+  unfold g in *; cbn; clear g; intros v.
   destruct (Level.eq_dec u v).
   - constructor; intros w Hw; exfalso.
-    apply clos_trans_tn1_iff in Hw; induction Hw; [|assumption].
-    induction H.
+    induction Hw.
     {
       apply UMapFacts.F.add_mapsto_iff in H; destruct H; [|intuition congruence].
       replace n with can in * by intuition congruence.
@@ -225,15 +228,19 @@ refine (
     {
       apply UMapFacts.F.add_mapsto_iff in H; destruct H; intuition congruence.
     }
-  - assert (Hwf := g0.(ult_trans_wf) v); unfold can; clear can.
+  - specialize (Hwf v).
     induction Hwf as [v Hv IH]; constructor; intros w Hw.
     assert (Hd : ~ Level.eq u w).
-    { clear - Hw n; intros Hrw; induction Hw.
-      + (* inversion H; subst.
-        - *) admit.
-      + destruct (Level.eq_dec u y); now intuition.
-
-    apply IH.
+    { clear - Hw n rw; intros Hrw.
+      inversion Hw; subst; clear Hw.
+      + apply UMap.add_3 in H; [|assumption].
+        elim rw; eapply g0.(ult_complete); [|econstructor; exact H].
+        eapply ult_step_lt; [eassumption|rewrite Hrw; assumption].
+      + apply UMap.add_3 in H; [|assumption].
+        elim rw; rewrite Hrw; eapply g0.(ult_complete); [|econstructor; exact H].
+        eapply ult_step_eq; assumption.
+    }
+    apply IH; [|exact Hd].
 
 Defined.
 
