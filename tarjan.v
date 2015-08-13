@@ -274,7 +274,7 @@ refine (
     destruct Hlt.
     { eapply ult_step_lt; [|eassumption]; eapply UMap.add_3 in H; eassumption. }
     { eapply ult_step_eq; [eassumption|]; eapply UMap.add_3 in H0; eassumption. }
-  
++ remember ans as elt; destruct elt; [apply UMap.find_2; intuition|apply F.not_find_in_iff; intuition].
 Defined.
 
 (*
