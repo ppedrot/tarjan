@@ -189,31 +189,41 @@ let change_node g n =
         g.entries }
 *)
 
-Definition repr (g : Universes) (u : Level.t) (m : UMap.In u g.(entries)) : canonical_node.
+Definition tip g u :=
+  {| univ := u;
+    ltle := UMap.empty bool;
+    gtge := USet.empty;
+    rank := 0;
+  (*         predicative = Level.is_set u; *)
+    klvl := 0;
+    ilvl := g.(index)
+  |}.
+
+Definition repr (g : Universes) (u : Level.t) : canonical_node.
 Proof.
 refine (
-  Fix g.(ult_trans_wf) (fun u => UMap.In u g.(entries) -> _)
-  (fun u repr m =>
+  Fix g.(ult_trans_wf) (fun u => _)
+  (fun u repr =>
     let ans := UMap.find u g.(entries) in
     match ans as elt return
       match elt with
-      | None => ~ UMap.In u g.(entries)
+      | None => True
       | Some n => UMap.MapsTo u n g.(entries)
       end -> _
     with
-    | None => fun rw => False_rect _ (rw m)
+    | None => fun _ => tip g u
     | Some (Canonical c) => fun _ => c
-    | Some (Equiv v) => fun rw => repr v _ _
+    | Some (Equiv v) => fun rw => repr v _
     end _
   )
-  u m
+  u
 ).
 + eapply ult_step_eq, rw; reflexivity.
-+ eapply g.(ult_complete); [|exists (Equiv v); eassumption].
-  eapply ult_step_eq, rw; reflexivity.
+(* + eapply g.(ult_complete); [|exists (Equiv v); eassumption]. *)
+(*   eapply ult_step_eq, rw; reflexivity. *)
 + remember ans as elt; destruct elt as [v|].
   - apply UMap.find_2; symmetry; assumption.
-  - intros [v Hv]; apply UMap.find_1 in Hv; unfold ans in *; exfalso; congruence.
+  - trivial.
 Defined.
 
 (* Reindexes the given universe, using the next available index. *)
@@ -223,16 +233,6 @@ Defined.
   assert (g.index > min_int);
   { g with index = g.index - 1 }
 *)
-
-Definition canonical g u :=
-  {| univ := u;
-    ltle := UMap.empty bool;
-    gtge := USet.empty;
-    rank := 0;
-  (*         predicative = Level.is_set u; *)
-    klvl := 0;
-    ilvl := g.(index)
-  |}.
 
 (* [safe_repr] is like [repr] but if the graph doesn't contain the
    searched universe, we add it. *)
@@ -249,7 +249,7 @@ refine (
   with
   | None =>
     fun rw =>
-    let can := canonical g u in
+    let can := tip g u in
     let g := {|
       index := N.pred g.(index);
       entries := UMap.add u (Canonical can) g.(entries);
@@ -258,11 +258,11 @@ refine (
     |} in
     let Hltu : forall v, ~ ult_step g.(entries) u v := _ in
     ({| ugraph := g |}, can)
-  | Some (Equiv v) => fun rw => (g, repr g v _)
+  | Some (Equiv v) => fun rw => (g, repr g v)
   | Some (Canonical c) => fun _ => (g, c)
   end _
 ).
-+ eapply g.(ult_complete); [|eexists; apply rw]; eapply ult_step_eq, rw; reflexivity.
+(* + eapply g.(ult_complete); [|eexists; apply rw]; eapply ult_step_eq, rw; reflexivity. *)
 + intros v Hv.
   destruct Hv as [n Hu Hv|z Heq Hv].
   - apply UMapFacts.F.add_mapsto_iff in Hu; destruct Hu; [|now intuition].
@@ -295,7 +295,7 @@ refine (
 + clear - g0; intros v n Hv.
   apply F.add_mapsto_iff in Hv; destruct Hv as [Hv|Hv].
   - replace n with can in * by intuition congruence.
-    unfold can, canonical; cbn; now intuition.
+    unfold can, tip; cbn; now intuition.
   - apply g0.(ueq_canonical); now intuition.
 + remember ans as elt; destruct elt; [apply UMap.find_2; intuition|apply F.not_find_in_iff; intuition].
 Defined.
