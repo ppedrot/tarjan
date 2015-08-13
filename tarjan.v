@@ -39,8 +39,9 @@ Record universes :=
     n_nodes : N; n_edges : N }.
 
 Inductive ueq_step g (u : Level.t) (v : Level.t) : Prop :=
-| ueq_step_eq :
-  UMap.MapsTo u (Equiv v) g ->
+| ueq_step_eq : forall w,
+  Level.eq v w ->
+  UMap.MapsTo u (Equiv w) g ->
   ueq_step g u v.
 
 Inductive ule_step g (u : Level.t) (v : Level.t) : Prop :=
@@ -48,8 +49,9 @@ Inductive ule_step g (u : Level.t) (v : Level.t) : Prop :=
   UMap.MapsTo u (Canonical n) g ->
   UMap.MapsTo v false n.(ltle) ->
   ule_step g u v
-| ule_step_eq :
-  UMap.MapsTo u (Equiv v) g ->
+| ule_step_eq : forall w,
+  Level.eq v w ->
+  UMap.MapsTo u (Equiv w) g ->
   ule_step g u v.
 
 Inductive ult_step g (u : Level.t) (v : Level.t) : Prop :=
@@ -57,8 +59,9 @@ Inductive ult_step g (u : Level.t) (v : Level.t) : Prop :=
   UMap.MapsTo u (Canonical n) g ->
   UMap.In v n.(ltle) ->
   ult_step g u v
-| ult_step_eq :
-  UMap.MapsTo u (Equiv v) g ->
+| ult_step_eq : forall w,
+  Level.eq v w ->
+  UMap.MapsTo u (Equiv w) g ->
   ult_step g u v.
 
 (*
@@ -168,9 +171,9 @@ refine (
   )
   u m
 ).
-+ apply t_step, ult_step_eq, rw.
++ eapply t_step, ult_step_eq, rw; reflexivity.
 + eapply g.(ult_complete); [|exists (Equiv v); eassumption].
-  eapply ult_step_eq, rw.
+  eapply ult_step_eq, rw; reflexivity.
 + remember ans as elt; destruct elt as [v|].
   - apply UMap.find_2; symmetry; assumption.
   - intros [v Hv]; apply UMap.find_1 in Hv; unfold ans in *; exfalso; congruence.
@@ -221,7 +224,7 @@ refine (
   | Some (Canonical c) => fun _ => (g, c)
   end _
 ).
-+ eapply g.(ult_complete); [|eexists; apply rw]; eapply ult_step_eq, rw.
++ eapply g.(ult_complete); [|eexists; apply rw]; eapply ult_step_eq, rw; reflexivity.
 + apply Transitive_Closure.wf_clos_trans.
   assert (Hwf : well_founded (fun u v : Level.t => ult_step (entries g0) v u)).
   { eapply Inclusion.wf_incl; [|eapply g0.(ult_trans_wf)].
@@ -236,7 +239,7 @@ refine (
       apply -> UMapFacts.F.empty_in_iff in H0; assumption.
     }
     {
-      apply UMapFacts.F.add_mapsto_iff in H; destruct H; intuition congruence.
+      apply UMapFacts.F.add_mapsto_iff in H0; destruct H0; intuition congruence.
     }
   - specialize (Hwf v).
     induction Hwf as [v Hv IH]; constructor; intros w Hw.
@@ -251,9 +254,9 @@ admit.
       + apply UMap.add_3 in H; [|assumption].
         elim rw; eapply g0.(ult_complete); [|econstructor; exact H].
         eapply ult_step_lt; [eassumption|rewrite Hrw; assumption].
-      + apply UMap.add_3 in H; [|assumption].
-        elim rw; rewrite Hrw; eapply g0.(ult_complete); [|econstructor; exact H].
-        eapply ult_step_eq; assumption.
+      + apply UMap.add_3 in H0; [|assumption].
+        elim rw; rewrite Hrw; eapply g0.(ult_complete); [|econstructor; exact H0].
+        eapply ult_step_eq; eassumption.
     }
     apply IH; [|exact Hd].
     
