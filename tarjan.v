@@ -246,17 +246,17 @@ refine (
   { eapply Inclusion.wf_incl; [|eapply g0.(ult_trans_wf)].
     apply Transitive_Closure.incl_clos_trans. }
   unfold g in *; cbn; clear g; intros v.
+  specialize (Hwf v); induction Hwf as [v Hv IH]; constructor; intros w Hw.
   destruct (Level.eq_dec u v) as [Hrw|Hd].
-  - rewrite <- Hrw; clear v Hrw.
-    constructor; intros w Hw; exfalso.
-    induction Hw.
+  - rewrite <- Hrw in Hw; clear - rw Hw; exfalso.
+    destruct Hw as [n Hu Hw|v Heq Hw].
     {
-      apply UMapFacts.F.add_mapsto_iff in H; destruct H; [|now intuition].
+      apply UMapFacts.F.add_mapsto_iff in Hu; destruct Hu; [|now intuition].
       replace n with can in * by intuition congruence.
-      apply -> UMapFacts.F.empty_in_iff in H0; assumption.
+      apply -> UMapFacts.F.empty_in_iff in Hw; assumption.
     }
     {
-      apply UMapFacts.F.add_mapsto_iff in H0; destruct H0; intuition (eauto || congruence).
+      apply UMapFacts.F.add_mapsto_iff in Hw; destruct Hw; intuition (eauto || congruence).
     }
   - specialize (Hwf v).
     induction Hwf as [v Hv IH]; constructor; intros w Hw.
