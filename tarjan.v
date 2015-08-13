@@ -320,27 +320,11 @@ clearbody l; revert Hin; induction l as [|x l IHl]; intros Hin.
     apply SetoidList.InA_cons_tl, Hy.
 Defined.
 
-End Univ.
-
-Definition map_fold_strong {A B} (m : UMap.t A)
-  (f : forall (k : UMap.key) (x : A), UMap.MapsTo k x m -> B -> B)
-  (i : B) : B.
-Proof.
-
 (** Inefficient, but UMap does not feature the right interface *)
 Definition map_fold_strong {A B} (m : UMap.t A)
   (f : forall (k : UMap.key) (x : A), UMap.MapsTo k x m -> B -> B)
-  (i : B) : B.
-Proof.
-refine (
-  UMap.fold (fun k _ accu =>
-    let ans := UMap.find k m in
-    match ans as elt return ans = elt -> B with
-    | None => fun _ => accu
-    | Some v => fun H => f k v (UMap.find_2 H) accu
-    end eq_refl) m i
-).
-Defined.
+  (i : B) : B :=
+    List.fold_right (fun p accu => match p with exist _ (x, k) p => f x k p accu end) i (elements_dep m).
 
 Definition set_fold_strong {A} (m : USet.t)
   (f : forall (k : USet.elt), USet.In k m -> A -> A)
