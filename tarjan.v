@@ -258,25 +258,14 @@ refine (
     {
       apply UMapFacts.F.add_mapsto_iff in Hw; destruct Hw; intuition (eauto || congruence).
     }
-  - specialize (Hwf v).
-    induction Hwf as [v Hv IH]; constructor; intros w Hw.
-    assert (Hp : ult_step (entries g0) v w).
-    {
-admit.
+  - apply IH; clear - Hw Hd.
+    destruct Hw as [n Hv Hw|z Heq Hv].
+    { apply UMap.add_3 in Hv; [|assumption].
+      eapply ult_step_lt; eassumption.
     }
-    assert (Hd2 : ~ Level.eq u w).
-    { clear - Hw Hd rw; intros Hrw.
-      inversion Hw; subst; clear Hw.
-      + apply UMap.add_3 in H; [|assumption].
-        elim rw; eapply g0.(ult_complete); [|econstructor; exact H].
-        eapply ult_step_lt; [eassumption|rewrite Hrw; assumption].
-      + apply UMap.add_3 in H0; [|assumption].
-        elim rw; rewrite Hrw; eapply g0.(ult_complete); [|econstructor; exact H0].
-        eapply ult_step_eq; eassumption.
+    { apply UMap.add_3 in Hv; [|assumption].
+      eapply ult_step_eq; eassumption.
     }
-    apply IH; [|exact Hd].
-    
-
 Defined.
 
 (*
