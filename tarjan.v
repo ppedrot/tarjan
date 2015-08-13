@@ -130,7 +130,7 @@ let check_universes_invariants g =
 
 Record Universes := {
   ugraph :> universes;
-  ult_trans_wf : well_founded (clos_trans _ (Basics.flip (ult_step ugraph.(entries))));
+  ult_trans_wf : well_founded (Basics.flip (ult_step ugraph.(entries)));
   ult_complete : forall u v, ult_step ugraph.(entries) u v -> UMap.In u ugraph.(entries) -> UMap.In v ugraph.(entries)
 }.
 
@@ -187,7 +187,7 @@ refine (
   )
   u m
 ).
-+ eapply t_step, ult_step_eq, rw; reflexivity.
++ eapply ult_step_eq, rw; reflexivity.
 + eapply g.(ult_complete); [|exists (Equiv v); eassumption].
   eapply ult_step_eq, rw; reflexivity.
 + remember ans as elt; destruct elt as [v|].
@@ -248,10 +248,7 @@ refine (
     replace n with can in * by intuition congruence.
     apply -> UMapFacts.F.empty_in_iff in Hv; assumption.
   - apply UMapFacts.F.add_mapsto_iff in Hv; destruct Hv; intuition (eauto || congruence).
-+ apply Transitive_Closure.wf_clos_trans.
-  assert (Hwf : well_founded (Basics.flip (ult_step (entries g0)))).
-  { eapply Inclusion.wf_incl; [|eapply g0.(ult_trans_wf)].
-    apply Transitive_Closure.incl_clos_trans. }
++ assert (Hwf := g0.(ult_trans_wf)).
   unfold g in *; cbn; clear g; intros v.
   specialize (Hwf v); induction Hwf as [v Hv IH]; constructor; intros w Hw.
   destruct (Level.eq_dec u v) as [Hrw|Hd].
@@ -355,8 +352,8 @@ Proof.
 refine (
   let (ltle, chgt_ltle) := clean_ltle g n.(ltle) m in
   if chgt_ltle then
-    let sz := UMap.cardinal n.(Univ.ltle) in
-    let sz2 := UMap.cardinal ltle in
+    let sz := N.of_nat (UMap.cardinal n.(Univ.ltle)) in
+    let sz2 := N.of_nat (UMap.cardinal ltle) in
     let n := {|
       univ := n.(univ);
       Univ.ltle := ltle;
@@ -365,9 +362,16 @@ refine (
       klvl := n.(klvl);
       ilvl := n.(ilvl)
     |} in
-    (ltle, n, g)
+    let g := {|
+      entries := UMap.add n.(univ) (Canonical n) g.(entries);
+      index := g.(index);
+      n_nodes := g.(n_nodes);
+      n_edges := (g.(n_edges) + sz2) - sz
+    |} in
+    (ltle, n, {| ugraph := g |})
   else (n.(Univ.ltle), n, g)
 ).
++ apply 
 Defined.
 
 (* [get_ltle] and [get_gtge] return ltle and gtge arcs.
