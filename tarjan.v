@@ -64,6 +64,12 @@ Inductive ult_step g (u : Level.t) (v : Level.t) : Prop :=
   UMap.MapsTo u (Equiv w) g ->
   ult_step g u v.
 
+Inductive is_canonical g u : Prop :=
+| canonical_intro : forall n,
+  Level.eq u n.(univ) ->
+  UMap.MapsTo u (Canonical n) g ->
+  is_canonical g u.
+
 Instance Proper_ueq_step : forall g, Proper (Level.eq ==> Level.eq ==> iff) (ueq_step g).
 Proof.
 intros g; eapply proper_sym_impl_iff_2; [now eauto|now eauto|].
@@ -89,6 +95,14 @@ destruct Hrw.
 + rewrite Hu, Hv in *; eapply ult_step_lt; eassumption.
 + rewrite Hu, Hv in *; eapply ult_step_eq; eassumption.
 Qed.
+
+Instance Proper_is_canonical : forall g, Proper (Level.eq ==> iff) (is_canonical g).
+Proof.
+intros g; eapply proper_sym_impl_iff; [now eauto|].
+intros u1 u2 Hu Hrw; destruct Hrw.
+rewrite Hu in *; econstructor; eassumption.
+Qed.
+
 
 (* Instance Proper_ult_step *)
 
@@ -328,6 +342,13 @@ refine (
 ).
 + apply m; exists strict; assumption.
 Defined.
+
+Lemma clean_ltle_spec : forall g ltle m,
+  let ans := clean_ltle g ltle m in
+  (forall u, UMap.In u (fst ans) -> Is_canonical g.(entries) u).
+  match clean_ltle g ltle m with
+  | (ltle, true) => 
+  end
 
 Definition clean_gtge (g : Universes) (gtge : USet.t)
   (m : forall u, USet.In u gtge -> UMap.In u g.(entries)) : USet.t * bool.
