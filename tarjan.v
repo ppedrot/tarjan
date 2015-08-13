@@ -348,12 +348,44 @@ refine (
 + apply m; assumption.
 Defined.
 
-let clean_gtge g gtge =
-  LSet.fold (fun u acc ->
-      let uu = (repr g u).univ in
-      if Level.equal uu u then acc
-      else LSet.add uu (LSet.remove u (fst acc)), true)
-    gtge (gtge, false)
+Definition get_ltle (g : Universes) (n : canonical_node)
+  (m : forall u, UMap.In u n.(ltle) -> UMap.In u g.(entries)) :
+  UMap.t bool * canonical_node * Universes.
+Proof.
+refine (
+  let (ltle, chgt_ltle) := clean_ltle g n.(ltle) m in
+  if chgt_ltle then
+    let sz := UMap.cardinal n.(Univ.ltle) in
+    let sz2 := UMap.cardinal ltle in
+    let n := {|
+      univ := n.(univ);
+      Univ.ltle := ltle;
+      gtge := n.(gtge);
+      rank := n.(rank);
+      klvl := n.(klvl);
+      ilvl := n.(ilvl)
+    |} in
+    (ltle, n, g)
+  else (n.(Univ.ltle), n, g)
+).
+Defined.
+
+(* [get_ltle] and [get_gtge] return ltle and gtge arcs.
+   Moreover, if one of these lists is dirty (e.g. points to a
+   non-canonical node), these functions clean this node in the
+   graph by removing some duplicate edges *)
+let get_ltle g u =
+  let ltle, chgt_ltle = clean_ltle g u.ltle in
+  if not chgt_ltle then u.ltle, u, g
+  else
+    let sz = LMap.cardinal u.ltle in
+    let sz2 = LMap.cardinal ltle in
+    let u = { u with ltle } in
+    let g = change_node g u in
+    let g = { g with n_edges = g.n_edges + sz2 - sz } in
+    u.ltle, u, g
+
+
 End Univ.
 
 Extraction Univ.
@@ -388,21 +420,6 @@ let check_universes_invariants g =
     g.entries;
   assert (!n_edges = g.n_edges);
   assert (!n_nodes = g.n_nodes)
-
-(* [get_ltle] and [get_gtge] return ltle and gtge arcs.
-   Moreover, if one of these lists is dirty (e.g. points to a
-   non-canonical node), these functions clean this node in the
-   graph by removing some duplicate edges *)
-let get_ltle g u =
-  let ltle, chgt_ltle = clean_ltle g u.ltle in
-  if not chgt_ltle then u.ltle, u, g
-  else
-    let sz = LMap.cardinal u.ltle in
-    let sz2 = LMap.cardinal ltle in
-    let u = { u with ltle } in
-    let g = change_node g u in
-    let g = { g with n_edges = g.n_edges + sz2 - sz } in
-    u.ltle, u, g
 
 let get_gtge g u =
   let gtge, chgt_gtge = clean_gtge g u.gtge in
