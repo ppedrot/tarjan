@@ -149,6 +149,12 @@ Record Universes := {
   ueq_canonical : forall u n, UMap.MapsTo u (Canonical n) ugraph.(entries) -> Level.eq u n.(univ)
 }.
 
+Module Rel.
+
+Definition eq (g : Universes) (u v : Level.t) := clos_refl_sym_trans _ (ueq_step g.(entries)) u v.
+
+End Rel.
+
 (* Low-level function : makes u an alias for v.
    Does not removes edges from n_edges, but decrements n_nodes.
    u should be entered as canonical before.  *)
@@ -301,6 +307,26 @@ match (u.(klvl) ?= v.(klvl))%N with
 | Eq => (u.(ilvl) ?= v.(ilvl))%N
 end.
 
+Definition elements_dep {A} (m : UMap.t A) : list {p : UMap.key * A | match p with (k, x) => UMap.MapsTo k x m end}.
+Proof.
+pose (l := UMap.elements m).
+assert (Hin := @UMap.elements_2 _ m).
+fold l in Hin.
+clearbody l; revert Hin; induction l as [|x l IHl]; intros Hin.
++ exact nil.
++ refine (cons (exist _ x _) (IHl _)).
+  - clear - Hin; destruct x; apply Hin; constructor; reflexivity.
+  - clear - Hin; intros y l' Hy; apply Hin.
+    apply SetoidList.InA_cons_tl, Hy.
+Defined.
+
+End Univ.
+
+Definition map_fold_strong {A B} (m : UMap.t A)
+  (f : forall (k : UMap.key) (x : A), UMap.MapsTo k x m -> B -> B)
+  (i : B) : B.
+Proof.
+
 (** Inefficient, but UMap does not feature the right interface *)
 Definition map_fold_strong {A B} (m : UMap.t A)
   (f : forall (k : UMap.key) (x : A), UMap.MapsTo k x m -> B -> B)
@@ -338,7 +364,7 @@ refine (
     let v := (repr g u _).(univ) in
     match Level.compare u v with
     | OrderedType.EQ _ => accu
-    | _ =>
+    | OrderedType.LT _ | OrderedType.GT _ =>
       let accu := UMap.remove u (fst accu) in
       if andb (negb strict) (UMap.mem v accu) then (accu, true)
       else (UMap.add v strict accu, true)
@@ -351,10 +377,20 @@ Defined.
 
 Lemma clean_ltle_spec : forall g ltle m,
   let ans := clean_ltle g ltle m in
-  (forall u, UMap.In u (fst ans) -> is_canonical g.(entries) u).
-  match clean_ltle g ltle m with
-  | (ltle, true) => 
-  end
+  (forall u, UMap.In u (fst ans) -> is_canonical g.(entries) u)
+(*   /\ (SetoidList.equivlistA (RelationPairs.RelProd (Rel.eq g) eq) (UMap.elements ltle) (UMap.elements (fst ans))) *)
+.
+Proof.
+intros g us m ans.
+unfold clean_ltle, map_fold_strong in ans.
+let t := eval red in ans in match t with UMap.fold ?F _ _ => set (f := F) in * end.
+pattern us in f.
+let t := eval red in f in match t with pattern  end.
+pattern ans.
+apply fold_rec_nodep.
+
+
+Qed.
 
 Definition clean_gtge (g : Universes) (gtge : USet.t)
   (m : forall u, USet.In u gtge -> UMap.In u g.(entries)) : USet.t * bool.
