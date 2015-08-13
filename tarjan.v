@@ -284,30 +284,53 @@ match (u.(klvl) ?= v.(klvl))%N with
 | Eq => (u.(ilvl) ?= v.(ilvl))%N
 end.
 
+(*
 Definition fold_strong {A B} (m : UMap.t A)
   (f : forall (k : UMap.key) (x : A), UMap.MapsTo k x m -> B -> B)
   (i : B) : B.
 Proof.
-refine (fold_rel (R := fun _ _ => B) i _).
-generalize m m.
-eapply fold_rel.
-
-Definition clean_ltle g ltle :=
-  let fold u strict acc :=
-    
-  in
-  UMap.fold fold ltle (ltle, false).
-(*
-let clean_ltle g ltle =
-  LMap.fold (fun u strict acc ->
-      let uu = (repr g u).univ in
-      if Level.equal uu u then acc
-      else (
-        let acc = LMap.remove u (fst acc) in
-        if not strict && LMap.mem uu acc then (acc, true)
-        else (LMap.add uu strict acc, true)))
-    ltle (ltle, false)
+refine (
+  UMap.fold (fun k _ accu =>
+    let ans := UMap.find k m in
+    match ans as elt return ans = elt -> B with
+    | None => fun _ => accu
+    | Some v => fun H => f k v (UMap.find_2 H) accu
+    end eq_refl) m i
+).
+Qed.
 *)
+
+(** Inefficient *)
+Definition clean_ltle (g : Universes) (ltle : UMap.t bool) : UMap.t bool * bool.
+Proof.
+refine (
+  let fold u strict accu :=
+    (** Inefficient, but UMap does not feature the right interface *)
+    let v :=
+      let ans := UMap.find u g.(entries) in
+      match UMap.find u g.(entries) as elt return
+        match elt with
+        | None => True
+        | Some _ => UMap.In u g.(entries)
+        end -> _
+      with
+      | None => fun _ => u
+      | Some _ => fun p => (repr g u p).(univ)
+      end _
+    in
+    match Level.compare u v with
+    | OrderedType.EQ _ => accu
+    | _ =>
+      let accu := UMap.remove u (fst accu) in
+      if andb (negb strict) (UMap.mem v accu) then (accu, true)
+      else (UMap.add v strict accu, true)
+    end
+  in
+  UMap.fold fold ltle (ltle, false)
+).
++ remember (UMap.find u (entries g)) as elt.
+  destruct elt as [n|]; [exists n; apply UMap.find_2; congruence|trivial].
+Defined.
 
 End Univ.
 
