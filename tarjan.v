@@ -270,16 +270,10 @@ refine (
   - apply F.add_neq_in_iff; [assumption|].
     assert (Hc : ~ Level.eq u v).
     { intros Hrw; eelim Hltu; rewrite Hrw; eassumption. }
-
-    eapply g0.(ult_complete); [|].
-
-  destruct (F.In_dec (entries g) w) as [Hw|]; [assumption|exfalso]. 
-  destruct (Level.eq_dec u v) as [Hrw|Hd].
-  - rewrite <- Hrw in Hlt; clear - Hlt rw.
-    destruct Hlt as [n Hu Hw|v Heq Hv].
-    { apply UMapFacts.F.add_mapsto_iff in Hu; destruct Hu. [|now intuition]. }
-
-rewrite Hrw in *; clear ans u Hrw.
+    apply g0.(ult_complete) with v; [|eapply F.add_neq_in_iff; eassumption].
+    destruct Hlt.
+    { eapply ult_step_lt; [|eassumption]; eapply UMap.add_3 in H; eassumption. }
+    { eapply ult_step_eq; [eassumption|]; eapply UMap.add_3 in H0; eassumption. }
   
 Defined.
 
