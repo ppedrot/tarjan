@@ -145,7 +145,8 @@ let check_universes_invariants g =
 Record Universes := {
   ugraph :> universes;
   ult_trans_wf : well_founded (Basics.flip (ult_step ugraph.(entries)));
-  ult_complete : forall u v, ult_step ugraph.(entries) u v -> UMap.In u ugraph.(entries) -> UMap.In v ugraph.(entries)
+  ult_complete : forall u v, ult_step ugraph.(entries) u v -> UMap.In u ugraph.(entries) -> UMap.In v ugraph.(entries);
+  ueq_canonical : forall u n, UMap.MapsTo u (Canonical n) ugraph.(entries) -> Level.eq u n.(univ)
 }.
 
 (* Low-level function : makes u an alias for v.
@@ -345,7 +346,7 @@ Defined.
 
 Lemma clean_ltle_spec : forall g ltle m,
   let ans := clean_ltle g ltle m in
-  (forall u, UMap.In u (fst ans) -> Is_canonical g.(entries) u).
+  (forall u, UMap.In u (fst ans) -> is_canonical g.(entries) u).
   match clean_ltle g ltle m with
   | (ltle, true) => 
   end
