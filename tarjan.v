@@ -64,15 +64,31 @@ Inductive ult_step g (u : Level.t) (v : Level.t) : Prop :=
   UMap.MapsTo u (Equiv w) g ->
   ult_step g u v.
 
-(*
+Instance Proper_ueq_step : forall g, Proper (Level.eq ==> Level.eq ==> iff) (ueq_step g).
+Proof.
+intros g; eapply proper_sym_impl_iff_2; [now eauto|now eauto|].
+intros u1 u2 Hu v1 v2 Hv Hrw.
+destruct Hrw.
++ rewrite Hu, Hv in *; eapply ueq_step_eq; eassumption.
+Qed.
+
+Instance Proper_ule_step : forall g, Proper (Level.eq ==> Level.eq ==> iff) (ule_step g).
+Proof.
+intros g; eapply proper_sym_impl_iff_2; [now eauto|now eauto|].
+intros u1 u2 Hu v1 v2 Hv Hrw.
+destruct Hrw.
++ rewrite Hu, Hv in *; eapply ule_step_le; eassumption.
++ rewrite Hu, Hv in *; eapply ule_step_eq; eassumption.
+Qed.
+
 Instance Proper_ult_step : forall g, Proper (Level.eq ==> Level.eq ==> iff) (ult_step g).
 Proof.
 intros g; eapply proper_sym_impl_iff_2; [now eauto|now eauto|].
 intros u1 u2 Hu v1 v2 Hv Hrw.
-inversion Hrw; subst.
+destruct Hrw.
 + rewrite Hu, Hv in *; eapply ult_step_lt; eassumption.
-+ rewrite Hu in *; eapply ult_step_eq. eassumption.
-*)
++ rewrite Hu, Hv in *; eapply ult_step_eq; eassumption.
+Qed.
 
 (* Instance Proper_ult_step *)
 
