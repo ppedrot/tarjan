@@ -277,17 +277,43 @@ refine (
 + remember ans as elt; destruct elt; [apply UMap.find_2; intuition|apply F.not_find_in_iff; intuition].
 Defined.
 
+Definition order u v :=
+match (u.(klvl) ?= v.(klvl))%N with
+| Lt => Lt
+| Gt => Gt
+| Eq => (u.(ilvl) ?= v.(ilvl))%N
+end.
+
+Definition fold_strong {A B} (m : UMap.t A)
+  (f : forall (k : UMap.key) (x : A), UMap.MapsTo k x m -> B -> B)
+  (i : B) : B.
+Proof.
+refine (fold_rel (R := fun _ _ => B) i _).
+generalize m m.
+eapply fold_rel.
+
+Definition clean_ltle g ltle :=
+  let fold u strict acc :=
+    
+  in
+  UMap.fold fold ltle (ltle, false).
+(*
+let clean_ltle g ltle =
+  LMap.fold (fun u strict acc ->
+      let uu = (repr g u).univ in
+      if Level.equal uu u then acc
+      else (
+        let acc = LMap.remove u (fst acc) in
+        if not strict && LMap.mem uu acc then (acc, true)
+        else (LMap.add uu strict acc, true)))
+    ltle (ltle, false)
+*)
+
 End Univ.
 
 Extraction Univ.
 
-(* [idx_of_can u] returns a pair of integers. Using lexicographical order
-   over this pair for different nodes can be used to know the relative
-   position of both nodes in the topological order. *)
-(* let idx_of_can u = u.klvl, u.ilvl *)
-
 (* Checks most of the invariants of the graph. For debugging purposes. *)
-(*
 let check_universes_invariants g =
   let n_edges = ref 0 in
   let n_nodes = ref 0 in
@@ -297,7 +323,7 @@ let check_universes_invariants g =
       LMap.iter (fun v strict ->
           incr n_edges;
           let v = repr g v in
-          assert (idx_of_can u < idx_of_can v);
+          assert (topo_compare u v = -1);
           if u.klvl = v.klvl then
             assert (LSet.mem u.univ v.gtge ||
                     LSet.exists (fun l -> u == repr g l) v.gtge))
@@ -317,17 +343,6 @@ let check_universes_invariants g =
     g.entries;
   assert (!n_edges = g.n_edges);
   assert (!n_nodes = g.n_nodes)
-*)
-(*
-let clean_ltle g ltle =
-  LMap.fold (fun u strict acc ->
-      let uu = (repr g u).univ in
-      if Level.equal uu u then acc
-      else (
-        let acc = LMap.remove u (fst acc) in
-        if not strict && LMap.mem uu acc then (acc, true)
-        else (LMap.add uu strict acc, true)))
-    ltle (ltle, false)
 
 let clean_gtge g gtge =
   LSet.fold (fun u acc ->
@@ -369,209 +384,211 @@ let revert_graph to_revert g =
     | Canonical t ->
       t.status <- NoMark) to_revert
 
-exception AbortBackward of universes * int
+exception AbortBackward of universes
 exception CycleDetected
 
 (* Implementation of the algorithm described in § 5.1 of the following paper:
-*)
 
    Bender, M. A., Fineman, J. T., Gilbert, S., & Tarjan, R. E. (2011). A
    new approach to incremental cycle detection and related
    problems. arXiv preprint arXiv:1112.0784. *)
-(* Assumes [u] and [v] are already in the graph. *)
 
-let reindex g ucan vcan =
-  (* STEP 1: do we need to reorder nodes ? *)
-  if idx_of_can ucan <= idx_of_can vcan then g
-  else begin
-    (* STEP 2: backward search in the k-level of u. *)
-    (* [delta] is the timeout for backward search. It might be
-       usefull to tune a multiplicative constant. *)
-    let delta =
-      int_of_float
-        (min (float_of_int g.n_edges ** 0.5)
-           (float_of_int g.n_nodes ** (2./.3.)))
+(* [delta] is the timeout for backward search. It might be
+    usefull to tune a multiplicative constant. *)
+let get_delta g =
+  int_of_float
+    (min (float_of_int g.n_edges ** 0.5)
+        (float_of_int g.n_nodes ** (2./.3.)))
+
+let rec backward_traverse to_revert b_traversed count g x =
+  let x = repr g x in
+  let count = count - 1 in
+  if count < 0 then begin
+    revert_graph to_revert g;
+    raise (AbortBackward g)
+  end;
+  if x.status = NoMark then begin
+    x.status <- Visited;
+    let to_revert = x.univ::to_revert in
+    let gtge, x, g = get_gtge g x in
+    let to_revert, b_traversed, count, g =
+      LSet.fold (fun y (to_revert, b_traversed, count, g) ->
+        backward_traverse to_revert b_traversed count g y)
+        gtge (to_revert, b_traversed, count, g)
     in
-    let rec backward_traverse to_revert b_traversed count g x =
-      let x = repr g x in
-      let count = count + 1 in
-      if count >= delta then begin
-        (* Backward search is too long, abort it and use
-           the next k-level. *)
-        let v_klvl = (repr g u).klvl + 1 in
-        revert_graph to_revert g;
-        raise (AbortBackward (g, v_klvl))
-      end;
-      if x.status = NoMark then begin
-        x.status <- Visited;
-        let to_revert = x.univ::to_revert in
-        let gtge, x, g = get_gtge g x in
-        let to_revert, b_traversed, count, g =
-          LSet.fold (fun y (to_revert, b_traversed, count, g) ->
-            backward_traverse to_revert b_traversed count g y)
-            gtge (to_revert, b_traversed, count, g)
-        in
-        to_revert, x.univ::b_traversed, count, g
-      end
-      else to_revert, b_traversed, count, g
-    in
-    (* [v_klvl] is the chosen future level for u, v and all
-       traversed nodes. *)
-    let b_traversed, v_klvl, g =
-      try
-        let to_revert, b_traversed, _, g = backward_traverse [] [] (-1) g u in
-        revert_graph to_revert g;
-        let v_klvl = (repr g u).klvl in
-        b_traversed, v_klvl, g
-      with AbortBackward (g, v_klvl) -> [], v_klvl, g
-    in
-    let f_traversed, g =
-      (* STEP 3: forward search. Contrary to what is described in
-         the paper, we do not test whether v_klvl = u.klvl nor we assign
-         v_klvl to v.klvl. Indeed, the first call to forward_traverse
-         will do all that. *)
-      let rec forward_traverse f_traversed g x y =
-        let y = repr g y in
-        if y.klvl < v_klvl then begin
-          let y = { y with klvl = v_klvl;
-                           gtge = if x == y then LSet.empty
-                                  else LSet.singleton x.univ }
-          in
-          let g = change_node g y in
-          let ltle, y, g = get_ltle g y in
-          let f_traversed, g =
-            LMap.fold (fun z _ (f_traversed, g) ->
-              forward_traverse f_traversed g y z)
-            ltle (f_traversed, g)
-          in
-          y.univ::f_traversed, g
-         end else if y.klvl = v_klvl && x != y then
-           let g = change_node g
-             { y with gtge = LSet.add x.univ y.gtge } in
-           f_traversed, g
-         else f_traversed, g
-      in
-      forward_traverse [] g (repr g v) v
-    in
-
-    (* STEP 4: merge nodes if needed. *)
-    let rec find_to_merge to_revert x =
-      let x = repr g x in
-      match x.status with
-      | Visited -> false, to_revert   | ToMerge -> true, to_revert
-      | NoMark ->
-        let to_revert = x::to_revert in
-        if Level.equal x.univ v then
-          begin x.status <- ToMerge; true, to_revert end
-        else
-          begin
-            let merge, to_revert = LSet.fold
-              (fun y (merge, to_revert) ->
-                let merge', to_revert = find_to_merge to_revert y in
-                merge' || merge, to_revert) x.gtge (false, to_revert)
-            in
-            x.status <- if merge then ToMerge else Visited;
-            merge, to_revert
-          end
-      | _ -> assert false
-    in
-    let to_merge, b_reindex, f_reindex =
-      if (repr g u).klvl = v_klvl then
-        begin
-          let merge, to_revert = find_to_merge [] u in
-          let r =
-            if merge then
-              List.filter (fun u -> u.status = ToMerge) to_revert,
-              List.filter (fun u -> (repr g u).status <> ToMerge) b_traversed,
-              List.filter (fun u -> (repr g u).status <> ToMerge) f_traversed
-            else [], b_traversed, f_traversed
-          in
-          List.iter (fun u -> u.status <- NoMark) to_revert;
-          r
-        end
-      else [], b_traversed, f_traversed
-    in
-    let to_reindex, g =
-      match to_merge with
-      | [] -> List.rev_append f_reindex b_reindex, g
-      | n0::q0 ->
-        (* Computing new root. *)
-        let root, rank_rest =
-          List.fold_left (fun ((best, rank_rest) as acc) n ->
-            if n.rank >= best.rank then n, best.rank else acc)
-            (n0, min_int) q0
-        in
-
-        (* Computing edge sets. *)
-        let to_merge_lvl =
-          List.fold_left (fun acc u -> LMap.add u.univ u acc)
-            LMap.empty to_merge
-        in
-        let ltle =
-          LMap.fold (fun _ n acc ->
-            LMap.merge (fun _ strict1 strict2 ->
-              match strict1, strict2 with
-              | Some true, _ | _, Some true -> Some true
-              | _, _ -> Some false)
-              acc n.ltle)
-            to_merge_lvl LMap.empty
-        in
-        let ltle, _ = clean_ltle g ltle in
-        let ltle =
-          LMap.merge (fun _ a strict ->
-            match a, strict with
-            | Some _, Some true ->
-              (* There is a lt edge inside the new component. This is a
-                 "bad cycle". *)
-              raise CycleDetected
-            | Some _, Some false -> None
-            | _, _ -> strict
-          ) to_merge_lvl ltle
-        in
-        let gtge =
-          LMap.fold (fun _ n acc -> LSet.union acc n.gtge)
-            to_merge_lvl LSet.empty
-        in
-        let gtge, _ = clean_gtge g gtge in
-        let gtge = LSet.diff gtge (LMap.domain to_merge_lvl) in
-
-        (* Inserting the new root. *)
-        let g = change_node g
-          { root with ltle; gtge;
-            rank = max root.rank (rank_rest + 1);
-            predicative = List.exists (fun n -> n.predicative) to_merge }
-        in
-
-        (* Inserting shortcuts for old nodes. *)
-        let g = List.fold_left (fun g n ->
-          if Level.equal n.univ root.univ then g else enter_equiv g n.univ root.univ)
-          g to_merge
-        in
-
-        (* Updating g.n_edges *)
-        let oldsz =
-          List.fold_left (fun sz u -> sz+LMap.cardinal u.ltle)
-            0 to_merge
-        in
-        let sz = LMap.cardinal ltle in
-        let g = { g with n_edges = g.n_edges + sz - oldsz } in
-
-        (* Not clear in the paper: we have to put the newly
-           created component just between B and F. *)
-        List.rev_append f_reindex (root.univ::b_reindex), g
-    in
-
-    (* STEP 5: reindex traversed nodes. *)
-    List.fold_left use_index g to_reindex
+    to_revert, x.univ::b_traversed, count, g
   end
+  else to_revert, b_traversed, count, g
+
+let rec forward_traverse f_traversed g v_klvl x y =
+  let y = repr g y in
+  if y.klvl < v_klvl then begin
+    let y = { y with klvl = v_klvl;
+                      gtge = if x == y then LSet.empty
+                            else LSet.singleton x.univ }
+    in
+    let g = change_node g y in
+    let ltle, y, g = get_ltle g y in
+    let f_traversed, g =
+      LMap.fold (fun z _ (f_traversed, g) ->
+        forward_traverse f_traversed g v_klvl y z)
+      ltle (f_traversed, g)
+    in
+    y.univ::f_traversed, g
+    end else if y.klvl = v_klvl && x != y then
+      let g = change_node g
+        { y with gtge = LSet.add x.univ y.gtge } in
+      f_traversed, g
+    else f_traversed, g
+
+let rec find_to_merge to_revert g x v =
+  let x = repr g x in
+  match x.status with
+  | Visited -> false, to_revert   | ToMerge -> true, to_revert
+  | NoMark ->
+    let to_revert = x::to_revert in
+    if Level.equal x.univ v then
+      begin x.status <- ToMerge; true, to_revert end
+    else
+      begin
+        let merge, to_revert = LSet.fold
+          (fun y (merge, to_revert) ->
+            let merge', to_revert = find_to_merge to_revert g y v in
+            merge' || merge, to_revert) x.gtge (false, to_revert)
+        in
+        x.status <- if merge then ToMerge else Visited;
+        merge, to_revert
+      end
+  | _ -> assert false
+
+let get_new_edges g to_merge =
+  (* Computing edge sets. *)
+  let to_merge_lvl =
+    List.fold_left (fun acc u -> LMap.add u.univ u acc)
+      LMap.empty to_merge
+  in
+  let ltle =
+    LMap.fold (fun _ n acc ->
+      LMap.merge (fun _ strict1 strict2 ->
+        match strict1, strict2 with
+        | Some true, _ | _, Some true -> Some true
+        | _, _ -> Some false)
+        acc n.ltle)
+      to_merge_lvl LMap.empty
+  in
+  let ltle, _ = clean_ltle g ltle in
+  let ltle =
+    LMap.merge (fun _ a strict ->
+      match a, strict with
+      | Some _, Some true ->
+        (* There is a lt edge inside the new component. This is a
+            "bad cycle". *)
+        raise CycleDetected
+      | Some _, Some false -> None
+      | _, _ -> strict
+    ) to_merge_lvl ltle
+  in
+  let gtge =
+    LMap.fold (fun _ n acc -> LSet.union acc n.gtge)
+      to_merge_lvl LSet.empty
+  in
+  let gtge, _ = clean_gtge g gtge in
+  let gtge = LSet.diff gtge (LMap.domain to_merge_lvl) in
+  (ltle, gtge)
 
 
+let reorder g u v =
+  (* STEP 1: backward search in the k-level of u. *)
+  let delta = get_delta g in
+
+  (* [v_klvl] is the chosen future level for u, v and all
+      traversed nodes. *)
+  let b_traversed, v_klvl, g =
+    try
+      let to_revert, b_traversed, _, g = backward_traverse [] [] delta g u in
+      revert_graph to_revert g;
+      let v_klvl = (repr g u).klvl in
+      b_traversed, v_klvl, g
+    with AbortBackward g ->
+      (* Backward search was too long, use the next k-level. *)
+      let v_klvl = (repr g u).klvl + 1 in
+      [], v_klvl, g
+  in
+  let f_traversed, g =
+    (* STEP 2: forward search. Contrary to what is described in
+        the paper, we do not test whether v_klvl = u.klvl nor we assign
+        v_klvl to v.klvl. Indeed, the first call to forward_traverse
+        will do all that. *)
+    forward_traverse [] g v_klvl (repr g v) v
+  in
+
+  (* STEP 3: merge nodes if needed. *)
+  let to_merge, b_reindex, f_reindex =
+    if (repr g u).klvl = v_klvl then
+      begin
+        let merge, to_revert = find_to_merge [] g u v in
+        let r =
+          if merge then
+            List.filter (fun u -> u.status = ToMerge) to_revert,
+            List.filter (fun u -> (repr g u).status <> ToMerge) b_traversed,
+            List.filter (fun u -> (repr g u).status <> ToMerge) f_traversed
+          else [], b_traversed, f_traversed
+        in
+        List.iter (fun u -> u.status <- NoMark) to_revert;
+        r
+      end
+    else [], b_traversed, f_traversed
+  in
+  let to_reindex, g =
+    match to_merge with
+    | [] -> List.rev_append f_reindex b_reindex, g
+    | n0::q0 ->
+      (* Computing new root. *)
+      let root, rank_rest =
+        List.fold_left (fun ((best, rank_rest) as acc) n ->
+          if n.rank >= best.rank then n, best.rank else acc)
+          (n0, min_int) q0
+      in
+      let ltle, gtge = get_new_edges g to_merge in
+      (* Inserting the new root. *)
+      let g = change_node g
+        { root with ltle; gtge;
+          rank = max root.rank (rank_rest + 1);
+          predicative = List.exists (fun n -> n.predicative) to_merge }
+      in
+
+      (* Inserting shortcuts for old nodes. *)
+      let g = List.fold_left (fun g n ->
+        if Level.equal n.univ root.univ then g else enter_equiv g n.univ root.univ)
+        g to_merge
+      in
+
+      (* Updating g.n_edges *)
+      let oldsz =
+        List.fold_left (fun sz u -> sz+LMap.cardinal u.ltle)
+          0 to_merge
+      in
+      let sz = LMap.cardinal ltle in
+      let g = { g with n_edges = g.n_edges + sz - oldsz } in
+
+      (* Not clear in the paper: we have to put the newly
+          created component just between B and F. *)
+      List.rev_append f_reindex (root.univ::b_reindex), g
+
+  in
+
+  (* STEP 4: reindex traversed nodes. *)
+  List.fold_left use_index g to_reindex
+
+(* Assumes [u] and [v] are already in the graph. *)
+(* Does NOT assume that ucan != vcan. *)
 let insert_edge strict ucan vcan g =
   try
     let u = ucan.univ and v = vcan.univ in
-    let g = reindex g ucan vcan in
+    (* do we need to reorder nodes ? *)
+    let g = if topo_compare ucan vcan <= 0 then g else reorder g u v in
 
-    (* STEP 6: insert the new edge in the graph. *)
+    (* insert the new edge in the graph. *)
     let u = repr g u in
     let v = repr g v in
     if u == v then
@@ -586,6 +603,12 @@ let insert_edge strict ucan vcan g =
           { (change_node g { u with ltle = LMap.add v.univ strict u.ltle })
             with n_edges = g.n_edges + 1 }
       in
+      let v, g =
+        if not u.predicative || v.predicative then v, g
+        else
+          let v = { v with predicative = true } in
+          v, change_node g v
+      in
       if u.klvl <> v.klvl || LSet.mem u.univ v.gtge then g
       else
         let v = { v with gtge = LSet.add u.univ v.gtge } in
@@ -596,95 +619,3 @@ let insert_edge strict ucan vcan g =
     (** Unlikely event: fatal error or signal *)
     let () = cleanup_universes g in
     raise e
-
-type constraint_type = Lt | Le | Eq
-
-type explanation = (constraint_type * universe) list
-
-exception Found_explanation of explanation
-
-let get_explanation strict u v g =
-  let v = repr g v in
-  let visited_strict = ref LMap.empty in
-  let rec traverse strict u =
-    if u == v then
-      if strict then None else Some []
-    else if idx_of_can u > idx_of_can v then None
-    else
-      let visited =
-        try not (LMap.find u.univ !visited_strict) || strict
-        with Not_found -> false
-      in
-      if visited then None
-      else begin
-        visited_strict := LMap.add u.univ strict !visited_strict;
-        try
-          LMap.iter (fun u' strictu' ->
-            match traverse (strict && not strictu') (repr g u') with
-            | None -> ()
-            | Some exp ->
-              let typ = if strictu' then Lt else Le in
-              raise (Found_explanation ((typ, make u') :: exp)))
-            u.ltle;
-          None
-        with Found_explanation exp -> Some exp
-      end
-  in
-  let u = repr g u in
-  if u == v then [(Eq, make v.univ)]
-  else match traverse strict u with Some exp -> exp | None -> assert false
-
-let get_explanation strict u v g =
-  if !Flags.univ_print then Some (get_explanation strict u v g)
-  else None
-
-(* To compare two nodes, we simply do a forward search.
-   We implement two improvements:
-   - we ignore nodes that are higher than the destination;
-   - we do a BFS rather than a DFS because we expect to have a short
-       path (typically, the shortest path has length 1)
-*)
-exception Found of canonical_node list
-let search_path strict u v g =
-  let rec loop to_revert todo next_todo =
-    match todo, next_todo with
-    | [], [] -> to_revert (* No path found *)
-    | [], _ -> loop to_revert next_todo []
-    | (u, strict)::todo, _ ->
-      if u.status = Visited || (u.status = WeakVisited && strict)
-      then loop to_revert todo next_todo
-      else
-        let to_revert =
-          if u.status = NoMark then u::to_revert else to_revert
-        in
-        u.status <- if strict then WeakVisited else Visited;
-        if try LMap.find v.univ u.ltle || not strict
-           with Not_found -> false
-        then raise (Found to_revert)
-        else
-          begin
-            let next_todo =
-              LMap.fold (fun u strictu next_todo ->
-                let strict = not strictu && strict in
-                let u = repr g u in
-                if u == v && not strict then raise (Found to_revert)
-                else if idx_of_can u > idx_of_can v then next_todo
-                else (u, strict)::next_todo)
-               u.ltle next_todo
-            in
-            loop to_revert todo next_todo
-          end
-  in
-  if u == v then not strict
-  else
-    try
-      let res, to_revert =
-        try false, loop [] [u, strict] []
-        with Found to_revert -> true, to_revert
-      in
-      List.iter (fun u -> u.status <- NoMark) to_revert;
-      res
-    with e ->
-      (** Unlikely event: fatal error or signal *)
-      let () = cleanup_universes g in
-      raise e
