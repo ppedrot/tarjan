@@ -1,5 +1,5 @@
 Require FSets FMaps NArith Wellfounded.
-Require Import BinNat Relations.
+Require Import Setoid Morphisms BinNat Relations.
 
 Set Primitive Projections.
 
@@ -38,28 +38,38 @@ Record universes :=
     index : N;
     n_nodes : N; n_edges : N }.
 
-Inductive ueq_step g : Level.t -> Level.t -> Prop :=
-| ueq_step_eq : forall u v,
+Inductive ueq_step g (u : Level.t) (v : Level.t) : Prop :=
+| ueq_step_eq :
   UMap.MapsTo u (Equiv v) g ->
   ueq_step g u v.
 
-Inductive ule_step g : Level.t -> Level.t -> Prop :=
-| ule_step_le : forall u v n,
+Inductive ule_step g (u : Level.t) (v : Level.t) : Prop :=
+| ule_step_le : forall n,
   UMap.MapsTo u (Canonical n) g ->
   UMap.MapsTo v false n.(ltle) ->
   ule_step g u v
-| ule_step_eq : forall u v,
+| ule_step_eq :
   UMap.MapsTo u (Equiv v) g ->
   ule_step g u v.
 
-Inductive ult_step g : Level.t -> Level.t -> Prop :=
-| ult_step_lt : forall u v n,
+Inductive ult_step g (u : Level.t) (v : Level.t) : Prop :=
+| ult_step_lt : forall n,
   UMap.MapsTo u (Canonical n) g ->
   UMap.In v n.(ltle) ->
   ult_step g u v
-| ult_step_eq : forall u v,
+| ult_step_eq :
   UMap.MapsTo u (Equiv v) g ->
   ult_step g u v.
+
+(*
+Instance Proper_ult_step : forall g, Proper (Level.eq ==> Level.eq ==> iff) (ult_step g).
+Proof.
+intros g; eapply proper_sym_impl_iff_2; [now eauto|now eauto|].
+intros u1 u2 Hu v1 v2 Hv Hrw.
+inversion Hrw; subst.
++ rewrite Hu, Hv in *; eapply ult_step_lt; eassumption.
++ rewrite Hu in *; eapply ult_step_eq. eassumption.
+*)
 
 (* Instance Proper_ult_step *)
 
@@ -230,6 +240,11 @@ refine (
     }
   - specialize (Hwf v).
     induction Hwf as [v Hv IH]; constructor; intros w Hw.
+    assert (Hp : ult_step (entries g0) v w).
+    {
+      clear - Hw n rw.
+admit.
+    }
     assert (Hd : ~ Level.eq u w).
     { clear - Hw n rw; intros Hrw.
       inversion Hw; subst; clear Hw.
@@ -241,6 +256,7 @@ refine (
         eapply ult_step_eq; assumption.
     }
     apply IH; [|exact Hd].
+    
 
 Defined.
 
