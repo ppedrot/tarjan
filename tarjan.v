@@ -16,8 +16,7 @@ Inductive status := NoMark | Visited | WeakVisited | ToMerge.
 
 Record canonical_node :=
 { univ: Level.t;
-  lt: USet.t;
-  le: USet.t;
+  ltle: UMap.t bool;
   gtge: USet.t;
   rank : N;
 (*   predicative : bool; *)
@@ -47,20 +46,16 @@ Inductive ueq_step g : Level.t -> Level.t -> Prop :=
 Inductive ule_step g : Level.t -> Level.t -> Prop :=
 | ule_step_le : forall u v n,
   UMap.MapsTo u (Canonical n) g ->
-  USet.In v n.(le) ->
+  UMap.MapsTo v false n.(ltle) ->
   ule_step g u v
 | ule_step_eq : forall u v,
   UMap.MapsTo u (Equiv v) g ->
   ule_step g u v.
 
 Inductive ult_step g : Level.t -> Level.t -> Prop :=
-| ult_step_le : forall u v n,
-  UMap.MapsTo u (Canonical n) g ->
-  USet.In v n.(le) ->
-  ult_step g u v
 | ult_step_lt : forall u v n,
   UMap.MapsTo u (Canonical n) g ->
-  USet.In v n.(lt) ->
+  UMap.In v n.(ltle) ->
   ult_step g u v
 | ult_step_eq : forall u v,
   UMap.MapsTo u (Equiv v) g ->
@@ -197,8 +192,7 @@ refine (
     fun rw =>
     let can :=
       {| univ := u;
-        lt := USet.empty;
-        le := USet.empty;
+        ltle := UMap.empty bool;
         gtge := USet.empty;
         rank := 0;
 (*         predicative = Level.is_set u; *)
@@ -226,12 +220,7 @@ refine (
     {
       apply UMapFacts.F.add_mapsto_iff in H; destruct H; [|intuition congruence].
       replace n with can in * by intuition congruence.
-      apply -> USetFacts.empty_iff in H0; assumption.
-    }
-    {
-      apply UMapFacts.F.add_mapsto_iff in H; destruct H; [|intuition congruence].
-      replace n with can in * by intuition congruence.
-      apply -> USetFacts.empty_iff in H0; assumption.
+      apply -> UMapFacts.F.empty_in_iff in H0; assumption.
     }
     {
       apply UMapFacts.F.add_mapsto_iff in H; destruct H; intuition congruence.
@@ -240,8 +229,8 @@ refine (
     induction Hwf as [v Hv IH]; constructor; intros w Hw.
     assert (Hd : ~ Level.eq u w).
     { clear - Hw n; intros Hrw; induction Hw.
-      + inversion H; subst.
-        -
+      + (* inversion H; subst.
+        - *) admit.
       + destruct (Level.eq_dec u y); now intuition.
 
     apply IH.
