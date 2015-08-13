@@ -203,6 +203,15 @@ Defined.
   { g with index = g.index - 1 }
 *)
 
+Definition canonical g u :=
+  {| univ := u;
+    ltle := UMap.empty bool;
+    gtge := USet.empty;
+    rank := 0;
+  (*         predicative = Level.is_set u; *)
+    klvl := 0;
+    ilvl := g.(index)
+  |}.
 
 (* [safe_repr] is like [repr] but if the graph doesn't contain the
    searched universe, we add it. *)
@@ -219,16 +228,7 @@ refine (
   with
   | None =>
     fun rw =>
-    let can :=
-      {| univ := u;
-        ltle := UMap.empty bool;
-        gtge := USet.empty;
-        rank := 0;
-(*         predicative = Level.is_set u; *)
-        klvl := 0;
-        ilvl := g.(index)
-      |}
-    in
+    let can := canonical g u in
     let g := {|
       index := N.pred g.(index);
       entries := UMap.add u (Canonical can) g.(entries);
@@ -266,6 +266,22 @@ refine (
     { apply UMap.add_3 in Hv; [|assumption].
       eapply ult_step_eq; eassumption.
     }
++ intros v w Hlt Hi.
+  destruct (Level.eq_dec u w) as [Hrw|Hd].
+  - rewrite <- Hrw; eapply UMapFacts.F.add_in_iff; intuition.
+  - apply F.add_neq_in_iff; [assumption|].
+    assert (Hc : ~ Level.eq u v).
+    { intros Hrw.
+    eapply g0.(ult_complete); [|].
+
+  destruct (F.In_dec (entries g) w) as [Hw|]; [assumption|exfalso]. 
+  destruct (Level.eq_dec u v) as [Hrw|Hd].
+  - rewrite <- Hrw in Hlt; clear - Hlt rw.
+    destruct Hlt as [n Hu Hw|v Heq Hv].
+    { apply UMapFacts.F.add_mapsto_iff in Hu; destruct Hu. [|now intuition]. }
+
+rewrite Hrw in *; clear ans u Hrw.
+  
 Defined.
 
 (*
