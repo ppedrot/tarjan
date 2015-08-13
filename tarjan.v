@@ -9,6 +9,9 @@ Module Univ
   (USet : FSetInterface.Sfun(Level))
 .
 
+Module Import USetFacts := FSetFacts.WFacts_fun(Level)(USet).
+Module Import UMapFacts := FMapFacts.WProperties_fun(Level)(UMap).
+
 Inductive status := NoMark | Visited | WeakVisited | ToMerge.
 
 Record canonical_node :=
@@ -36,32 +39,34 @@ Record universes :=
     index : N;
     n_nodes : N; n_edges : N }.
 
-Inductive ueq_step (g : universes) : Level.t -> Level.t -> Prop :=
+Inductive ueq_step g : Level.t -> Level.t -> Prop :=
 | ueq_step_eq : forall u v,
-  UMap.MapsTo u (Equiv v) g.(entries) ->
+  UMap.MapsTo u (Equiv v) g ->
   ueq_step g u v.
 
-Inductive ule_step (g : universes) : Level.t -> Level.t -> Prop :=
+Inductive ule_step g : Level.t -> Level.t -> Prop :=
 | ule_step_le : forall u v n,
-  UMap.MapsTo u (Canonical n) g.(entries) ->
+  UMap.MapsTo u (Canonical n) g ->
   USet.In v n.(le) ->
   ule_step g u v
 | ule_step_eq : forall u v,
-  UMap.MapsTo u (Equiv v) g.(entries) ->
+  UMap.MapsTo u (Equiv v) g ->
   ule_step g u v.
 
-Inductive ult_step (g : universes) : Level.t -> Level.t -> Prop :=
+Inductive ult_step g : Level.t -> Level.t -> Prop :=
 | ult_step_le : forall u v n,
-  UMap.MapsTo u (Canonical n) g.(entries) ->
+  UMap.MapsTo u (Canonical n) g ->
   USet.In v n.(le) ->
   ult_step g u v
 | ult_step_lt : forall u v n,
-  UMap.MapsTo u (Canonical n) g.(entries) ->
+  UMap.MapsTo u (Canonical n) g ->
   USet.In v n.(lt) ->
   ult_step g u v
 | ult_step_eq : forall u v,
-  UMap.MapsTo u (Equiv v) g.(entries) ->
+  UMap.MapsTo u (Equiv v) g ->
   ult_step g u v.
+
+(* Instance Proper_ult_step *)
 
 (*
 let check_universes_invariants g =
@@ -101,8 +106,8 @@ let check_universes_invariants g =
 
 Record Universes := {
   ugraph :> universes;
-  ult_trans_wf : well_founded (fun u v => clos_trans _ (ult_step ugraph) v u);
-  ueq_complete : forall u v, UMap.MapsTo u (Equiv v) ugraph.(entries) -> UMap.In v ugraph.(entries)
+  ult_trans_wf : well_founded (fun u v => clos_trans _ (ult_step ugraph.(entries)) v u);
+  ult_complete : forall u v, ult_step ugraph.(entries) u v -> UMap.In u ugraph.(entries) -> UMap.In v ugraph.(entries)
 }.
 
 (* Low-level function : makes u an alias for v.
@@ -159,7 +164,8 @@ refine (
   u m
 ).
 + apply t_step, ult_step_eq, rw.
-+ eapply g.(ueq_complete), rw.
++ eapply g.(ult_complete); [|exists (Equiv v); eassumption].
+  eapply ult_step_eq, rw.
 + remember ans as elt; destruct elt as [v|].
   - apply UMap.find_2; symmetry; assumption.
   - intros [v Hv]; apply UMap.find_1 in Hv; unfold ans in *; exfalso; congruence.
@@ -207,11 +213,39 @@ refine (
       n_edges := g.(n_edges)
     |} in
     ({| ugraph := g |}, can)
-  | Some (Equiv v) => fun rw => (g, repr g v (g.(ueq_complete) u _ rw))
+  | Some (Equiv v) => fun rw => (g, repr g v _)
   | Some (Canonical c) => fun _ => (g, c)
   end _
 ).
-+ unfold g.
++ eapply g.(ult_complete); [|eexists; apply rw]; eapply ult_step_eq, rw.
++ unfold g in *; cbn; clear g; intros v.
+  destruct (Level.eq_dec u v).
+  - constructor; intros w Hw; exfalso.
+    apply clos_trans_tn1_iff in Hw; induction Hw; [|assumption].
+    induction H.
+    {
+      apply UMapFacts.F.add_mapsto_iff in H; destruct H; [|intuition congruence].
+      replace n with can in * by intuition congruence.
+      apply -> USetFacts.empty_iff in H0; assumption.
+    }
+    {
+      apply UMapFacts.F.add_mapsto_iff in H; destruct H; [|intuition congruence].
+      replace n with can in * by intuition congruence.
+      apply -> USetFacts.empty_iff in H0; assumption.
+    }
+    {
+      apply UMapFacts.F.add_mapsto_iff in H; destruct H; intuition congruence.
+    }
+  - assert (Hwf := g0.(ult_trans_wf) v); unfold can; clear can.
+    induction Hwf as [v Hv IH]; constructor; intros w Hw.
+    assert (Hd : ~ Level.eq u w).
+    { clear - Hw n; intros Hrw; induction Hw.
+      + inversion H; subst.
+        -
+      + destruct (Level.eq_dec u y); now intuition.
+
+    apply IH.
+
 Defined.
 
 (*
