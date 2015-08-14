@@ -665,7 +665,8 @@ Fix N.lt_wf_0 (fun count => btT (N.succ count) -> _ -> _ -> btT count + Universe
         inl (btT_cast r _)
       in
       let r := @Build_btT _ r.(btT_traversed) seen' (N.pred count) _ (snd cleaned) in
-      USet.fold fold (fst (fst cleaned)) (inl r) >>= fun r => inl (btT_push r u)
+      USet.fold fold (fst (fst cleaned)) (inl r) >>= fun r =>
+      inl (btT_push r u)
   end eq_refl) count
     {| btT_count := count; btT_univ := g; btT_traversed := nil; btT_seen := USet.empty |} u m
 ).
