@@ -573,9 +573,10 @@ unfold ans; apply fold_rec; cbn in *; clear.
   - discriminate.
 Qed.
 
-Lemma findA_inA : forall A B eqb l v,
+(* Lemma findA_inA : forall A B eqb l v,
   @SetoidList.findA A B eqb l = Some v.
-
+ *)
+(*
 Lemma clean_ltle_equiv : forall (g : Universes) ltle
   (m : forall u, UMap.In u ltle -> UMap.In u g.(entries)),
   let ans := clean_ltle g ltle m in
@@ -590,9 +591,8 @@ unfold ans; apply fold_rec; cbn [fst snd] in *; clear.
 + intros u b [m b'] m1 m2 Hm Hm1 Hm2 IH [v b0]; cbn [fst snd] in *.
   destruct (Level.eq_dec u v) as [Hrw|Hd].
   - split; intro HIn.
-    { apply SetoidList.InA_eqA with (u, b).
-
-typeclasses eauto.
+    { apply SetoidList.InA_eqA with (u, b); try typeclasses eauto.
+      + split; unfold RelationPairs.RelCompFun; cbn.
 
 
   do 2 rewrite <- F.elements_mapsto_iff.
@@ -601,7 +601,7 @@ typeclasses eauto.
   do 2 rewrite F.find_mapsto_iff; rewrite Hm2.
   rewrite
 Qed.
-
+*)
 
 Definition clean_gtge (g : Universes) (gtge : USet.t)
   (m : forall u, USet.In u gtge -> UMap.In u g.(entries)) : USet.t * bool.
@@ -647,8 +647,7 @@ refine (
 + intros u.
   assert (Hwf := g0.(ult_trans_wf) u).
   induction Hwf as [u Hu IH].
-  
-Defined.
+Admitted.
 
 (* [get_ltle] and [get_gtge] return ltle and gtge arcs.
    Moreover, if one of these lists is dirty (e.g. points to a
