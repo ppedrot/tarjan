@@ -149,13 +149,11 @@ Record Universes := {
   ugraph :> universes;
   ult_trans_wf : well_founded (Basics.flip (ult_step ugraph.(entries)));
   ult_complete : forall u v, ult_step ugraph.(entries) u v -> UMap.In v ugraph.(entries);
-  ueq_canonical : forall u n, UMap.MapsTo u (Canonical n) ugraph.(entries) -> Level.eq u n.(univ);
-  unv_gtge_rev : forall u n, UMap.MapsTo u (Canonical n)
+  ueq_canonical : forall u n, UMap.MapsTo u (Canonical n) ugraph.(entries) -> Level.eq u n.(univ)
+(*   unv_gtge_rev : forall u n, UMap.MapsTo u (Canonical n) *)
 }.
 
 Module Rel.
-
-SearchAbout relation.
 
 Definition eq (g : Universes) (u v : Level.t) :=
   clos_refl_sym_trans _ (relation_disjunction (ueq_step g.(entries)) Level.eq) u v.
