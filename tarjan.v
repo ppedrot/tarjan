@@ -593,12 +593,11 @@ Record btT (count : N) := {
 
 Unset Implicit Arguments.
 
-(*
-Program Definition btT_pred {c} (r : btT c) (p : c <> 0%N) : btT (N.pred c) :=
+Program Definition btT_pred {c} (r : btT (N.succ c)) (p : c <> 0%N) : btT c :=
 {|
   btT_traversed := r.(btT_traversed);
   btT_seen := r.(btT_seen);
-  btT_count := N.pred (r.(btT_count));
+  btT_count := N.pred c;
   btT_countlt := _;
   btT_univ := r.(btT_univ)
 |}.
@@ -606,7 +605,6 @@ Next Obligation.
 intros c r p.
 eapply N.lt_pred_l; congruence.
 Qed.
-*)
 
 Program Definition btT_cast {c1 c2} (r : btT c1) (p : N.lt c1 c2) : btT c2 :=
 {|
@@ -630,27 +628,39 @@ Program Definition btT_push {c} (r : btT c) (u : Level.t) : btT c :=
   btT_univ := r.(btT_univ)
 |}.
 
+Program Definition btT_reset {c1 c2} (r : btT c1) : btT (N.succ c2) :=
+{|
+  btT_traversed := r.(btT_traversed);
+  btT_seen := r.(btT_seen);
+  btT_count := c2;
+  btT_countlt := _;
+  btT_univ := r.(btT_univ)
+|}.
+Next Obligation.
+intros; apply N.lt_succ_diag_r.
+Qed.
+
 Definition backward_traverse (g : Universes)
   (count : N) (u : Level.t) (m : UMap.In u g.(entries)) :
   btT count + Universes.
 Proof.
 refine (
-Fix N.lt_wf_0 (fun _ => _)
-  (fun count traverse g seen traversed u m =>
+Fix N.lt_wf_0 (fun count => btT (N.succ count) -> _ -> _ -> btT count + Universes)
+  (fun count traverse r u m =>
+  let g := r.(btT_univ) in
   match count as c return count = c -> _ with
   | N0 => fun _ => inr g
   | _ =>
     fun pf =>
     let n := repr g u in
-    if USet.mem n.(univ) seen then
-      inl {| btT_seen := seen; btT_count := N.pred count; btT_univ := g; btT_traversed := traversed |}
+    if USet.mem n.(univ) r.(btT_seen) then inl (btT_pred r _)
     else
-      let seen' := USet.add n.(univ) seen in
+      let seen' := USet.add n.(univ) r.(btT_seen) in
       let cleaned := get_gtge g n _ in
       let fold v (accu : btT count + Universes) : btT count + Universes :=
         match accu with
         | inl r  =>
-          let r := traverse r.(btT_count) r.(btT_countlt) r.(btT_univ) r.(btT_seen) r.(btT_traversed) v m in
+          let r := traverse r.(btT_count) r.(btT_countlt) (btT_reset r) v m in
           match r with
           | inl r => inl (btT_cast r _)
           | inr g => inr g
@@ -658,18 +668,25 @@ Fix N.lt_wf_0 (fun _ => _)
         | inr g => inr g
         end
       in
-      let r := @Build_btT _ traversed seen' (N.pred count) _ (snd cleaned) in
+      let r := @Build_btT _ r.(btT_traversed) seen' (N.pred count) _ (snd cleaned) in
       let ans := USet.fold fold (fst (fst cleaned)) (inl r) in
       match ans return _ with
       | inl r  => inl (btT_push r u)
       | inr g => inr g
       end
-  end eq_refl) count g USet.empty nil u m
+  end eq_refl) count
+    {| btT_count := count; btT_univ := g; btT_traversed := nil; btT_seen := USet.empty |} u m
 ).
-+ apply N.lt_pred_l; congruence.
++ congruence.
 + intros v Hv.
   admit.
 + apply btT_countlt.
++ apply N.lt_pred_l; congruence.
++ apply N.lt_succ_diag_r.
+Qed.
+
+
+apply (btT_cast r).
 + apply N.lt_pred_l; congruence.
 
 Defined.
