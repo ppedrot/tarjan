@@ -151,7 +151,8 @@ Record Universes := {
 
 Module Rel.
 
-Definition eq (g : Universes) (u v : Level.t) := clos_refl_sym_trans _ (ueq_step g.(entries)) u v.
+Definition eq (g : Universes) (u v : Level.t) :=
+  clos_refl_sym_trans _ (ueq_step g.(entries)) u v.
 
 End Rel.
 
@@ -490,16 +491,19 @@ intros g us m ans u Hu.
 unfold clean_ltle in ans.
 let t := eval red in ans in match t with UMap.fold ?F _ _ => set (f := F) in * end.
 unfold ans in *; clear ans.
-set (accu := us) in Hu at 2.
+revert u m Hu.
+apply fold_rec; cbn in *; clear.
++ intros.
 
-assert (Hst : forall u, UMap.In u us -> UMap.In u (fst (UMap.fold f us (accu, false))) -> is_canonical (entries g) u).
-revert m; apply fold_rec; cbn in *.
-+ cbn in *; intros ? He _ ? [? ?] _.
+(* assert (Hst : forall u, UMap.In u us -> UMap.In u (fst (UMap.fold f us (accu, false))) -> is_canonical (entries g) u). *)
+revert m Hu; apply fold_rec; cbn in *.
++ cbn in *; intros ? He _ _ ? [? ?] _.
   eelim He; eassumption.
-+ clear; intros u b [accu b'] vs ws Hu Hn Hvw IH m v Hv Hi; cbn in *.
++ clear u; intros u b [accu ?] vs ws Hu Hn Hvw IH m v Hv Hi; cbn in *.
   unfold f in *.
   destruct (Level.eq_dec u (univ (repr g u))) as [Heq|Hdf]; cbn in *.
-  
+  apply repr_is_canonical in Heq.
+  rewrite <- Heq.
 
 Qed.
 
