@@ -538,7 +538,7 @@ refine (
 ).
 Defined.
 
-Lemma clean_ltle_spec : forall (g : Universes) ltle
+Lemma clean_ltle_identity : forall (g : Universes) ltle
   (m : forall u, UMap.In u ltle -> UMap.In u g.(entries)),
   let ans := clean_ltle g ltle m in
   snd ans = false -> UMap.Equal (fst ans) ltle.
@@ -555,6 +555,35 @@ unfold ans; apply fold_rec; cbn in *; clear.
     rewrite IH, <- e; symmetry; exact Hm2.
   - discriminate.
 Qed.
+
+Lemma findA_inA : forall A B eqb l v,
+  @SetoidList.findA A B eqb l = Some v.
+
+Lemma clean_ltle_equiv : forall (g : Universes) ltle
+  (m : forall u, UMap.In u ltle -> UMap.In u g.(entries)),
+  let ans := clean_ltle g ltle m in
+  SetoidList.equivlistA (RelationPairs.RelProd (Rel.eq g) eq) (UMap.elements ltle) (UMap.elements (fst ans)).
+Proof.
+intros g init m ans.
+unfold clean_ltle in ans.
+unfold ans; apply fold_rec; cbn in *; clear.
++ intros m Hm [accu b]; cbn in *.
+  rewrite elements_empty.
+  apply elements_Empty in Hm; rewrite Hm; intuition.
++ intros u b [m b'] m1 m2 Hm Hm1 Hm2 IH [v b0]; cbn in *.
+  destruct (Level.eq_dec u v) as [Hrw|Hd].
+  - split; intro HIn.
+    { apply SetoidList.InA_eqA with (u, b).
+typeclasses eauto.
+
+
+  do 2 rewrite <- F.elements_mapsto_iff.
+  specialize (IH (v, b0)).
+  do 2 rewrite <- F.elements_mapsto_iff in IH.
+  do 2 rewrite F.find_mapsto_iff; rewrite Hm2.
+  rewrite
+Qed.
+
 
 Definition clean_gtge (g : Universes) (gtge : USet.t)
   (m : forall u, USet.In u gtge -> UMap.In u g.(entries)) : USet.t * bool.
