@@ -661,7 +661,7 @@ Fix N.lt_wf_0 (fun count => btT (N.succ count) -> _ -> _ -> btT count + Universe
       let cleaned := get_gtge g n _ in
       let fold v (accu : btT count + Universes) : btT count + Universes :=
         accu >>= fun r =>
-        traverse r.(btT_count) r.(btT_countlt) (btT_reset r) v m >>= fun r' =>
+        traverse r.(btT_count) r.(btT_countlt) (btT_reset r) v m >>= fun r =>
         inl (btT_cast r _)
       in
       let r := @Build_btT _ r.(btT_traversed) seen' (N.pred count) _ (snd cleaned) in
