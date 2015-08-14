@@ -1,6 +1,7 @@
 Require FSets FMaps NArith Wellfounded.
-Require Import Setoid Morphisms BinNat Relations.
+Require Import Program Setoid Morphisms BinNat Relations.
 
+Obligation Tactic := idtac.
 Set Primitive Projections.
 
 Module Univ
@@ -324,71 +325,88 @@ Qed.
   { g with index = g.index - 1 }
 *)
 
+
 (* [safe_repr] is like [repr] but if the graph doesn't contain the
    searched universe, we add it. *)
-Definition safe_repr (g : Universes) (u : Level.t) :
-  Universes * canonical_node.
-Proof.
-refine (
-  let ans := UMap.find u g.(entries) in
-  match ans as elt return
-    match elt with
-    | None => ~ UMap.In u g.(entries)
-    | Some n => UMap.MapsTo u n g.(entries)
-    end -> _
-  with
-  | None =>
-    fun rw =>
-    let can := tip g u in
-    let g := {|
-      index := N.pred g.(index);
-      entries := UMap.add u (Canonical can) g.(entries);
-      n_nodes := N.succ g.(n_nodes);
-      n_edges := g.(n_edges)
-    |} in
-    let Hltu : forall v, ~ ult_step g.(entries) u v := _ in
-    ({| ugraph := g |}, can)
-  | Some (Equiv v) => fun rw => (g, repr g v)
-  | Some (Canonical c) => fun _ => (g, c)
-  end _
-).
-(* + eapply g.(ult_complete); [|eexists; apply rw]; eapply ult_step_eq, rw; reflexivity. *)
-+ intros v Hv.
-  destruct Hv as [n Hu Hv|z Heq Hv].
-  - apply UMapFacts.F.add_mapsto_iff in Hu; destruct Hu; [|now intuition].
-    replace n with can in * by intuition congruence.
-    apply -> UMapFacts.F.empty_in_iff in Hv; assumption.
-  - apply UMapFacts.F.add_mapsto_iff in Hv; destruct Hv; intuition (eauto || congruence).
-+ assert (Hwf := g0.(ult_trans_wf)).
-  unfold g in *; cbn; clear g; intros v.
-  specialize (Hwf v); induction Hwf as [v Hv IH]; constructor; intros w Hw.
-  destruct (Level.eq_dec u v) as [Hrw|Hd].
-  - rewrite <- Hrw in Hw; eelim Hltu; eassumption.
-  - apply IH; clear - Hw Hd.
-    destruct Hw as [n Hv Hw|z Heq Hv].
-    { apply UMap.add_3 in Hv; [|assumption].
-      eapply ult_step_lt; eassumption.
-    }
-    { apply UMap.add_3 in Hv; [|assumption].
-      eapply ult_step_eq; eassumption.
-    }
-+ intros v w Hlt.
-  destruct (Level.eq_dec u w) as [Hrw|Hd].
-  - rewrite <- Hrw; eapply UMapFacts.F.add_in_iff; intuition.
-  - apply F.add_neq_in_iff; [assumption|].
-    assert (Hc : ~ Level.eq u v).
-    { intros Hrw; eelim Hltu; rewrite Hrw; eassumption. }
-    apply g0.(ult_complete) with v.
-    destruct Hlt.
-    { eapply ult_step_lt; [|eassumption]; eapply UMap.add_3 in H; eassumption. }
-    { eapply ult_step_eq; [eassumption|]; eapply UMap.add_3 in H0; eassumption. }
-+ clear - g0; intros v n Hv.
-  apply F.add_mapsto_iff in Hv; destruct Hv as [Hv|Hv].
-  - replace n with can in * by intuition congruence.
-    unfold can, tip; cbn; now intuition.
-  - apply g0.(ueq_canonical); now intuition.
-+ remember ans as elt; destruct elt; [apply UMap.find_2; intuition|apply F.not_find_in_iff; intuition].
-Defined.
+Program Definition safe_repr (g : Universes) (u : Level.t) :
+  Universes * canonical_node :=
+let ans := UMap.find u g.(entries) in
+match ans as elt return
+  match elt with
+  | None => ~ UMap.In u g.(entries)
+  | Some n => UMap.MapsTo u n g.(entries)
+  end -> _
+with
+| None =>
+  fun rw =>
+  let can := tip g u in
+  let g := {|
+    index := N.pred g.(index);
+    entries := UMap.add u (Canonical can) g.(entries);
+    n_nodes := N.succ g.(n_nodes);
+    n_edges := g.(n_edges)
+  |} in
+  let Hltu : forall v, ~ ult_step g.(entries) u v := _ in
+  ({| ugraph := g |}, can)
+| Some (Equiv v) => fun rw => (g, repr g v)
+| Some (Canonical c) => fun _ => (g, c)
+end _.
+
+Next Obligation.
+intros g u ? ? ? ? v Hv.
+destruct Hv as [n Hu Hv|z Heq Hv].
++ apply UMapFacts.F.add_mapsto_iff in Hu; destruct Hu; [|now intuition].
+  replace n with can in * by intuition congruence.
+  apply -> UMapFacts.F.empty_in_iff in Hv; assumption.
++ apply UMapFacts.F.add_mapsto_iff in Hv; destruct Hv; intuition (eauto || congruence).
+Qed.
+
+Next Obligation.
+intros g u ? ? ? g0 ?.
+assert (Hwf := g.(ult_trans_wf)).
+unfold g0 in *; cbn; clear g0; intros v.
+specialize (Hwf v); induction Hwf as [v Hv IH]; constructor; intros w Hw.
+destruct (Level.eq_dec u v) as [Hrw|Hd].
++ rewrite <- Hrw in Hw; eelim Hltu; eassumption.
++ apply IH; clear - Hw Hd.
+  destruct Hw as [n Hv Hw|z Heq Hv].
+  { apply UMap.add_3 in Hv; [|assumption].
+    eapply ult_step_lt; eassumption.
+  }
+  { apply UMap.add_3 in Hv; [|assumption].
+    eapply ult_step_eq; eassumption.
+  }
+Qed.
+
+Next Obligation.
+intros g u ? ? ? g0 ?.
+intros v w Hlt.
+destruct (Level.eq_dec u w) as [Hrw|Hd].
++ rewrite <- Hrw; eapply UMapFacts.F.add_in_iff; intuition.
++ apply F.add_neq_in_iff; [assumption|].
+  assert (Hc : ~ Level.eq u v).
+  { intros Hrw; eelim Hltu; rewrite Hrw; eassumption. }
+  apply g.(ult_complete) with v.
+  destruct Hlt.
+  { eapply ult_step_lt; [|eassumption]; eapply UMap.add_3 in H; eassumption. }
+  { eapply ult_step_eq; [eassumption|]; eapply UMap.add_3 in H0; eassumption. }
+Qed.
+
+Next Obligation.
+intros g u ? ? ? g0 ?.
+clear - g; intros v n Hv.
+apply F.add_mapsto_iff in Hv; destruct Hv as [Hv|Hv].
++ replace n with can in * by intuition congruence.
+  unfold can, tip; cbn; now intuition.
++ apply g.(ueq_canonical); now intuition.
+Qed.
+
+Next Obligation.
+intros g u ? ? ?.
+remember ans as elt; destruct elt; [apply UMap.find_2; intuition|apply F.not_find_in_iff; intuition].
+Qed.
+
+Check safe_repr.
 
 Definition order u v :=
 match (u.(klvl) ?= v.(klvl))%N with
