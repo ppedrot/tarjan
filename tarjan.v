@@ -107,6 +107,25 @@ intros u1 u2 Hu Hrw; destruct Hrw.
 rewrite Hu in *; econstructor; eassumption.
 Qed.
 
+Definition Repr g u v := clos_refl_trans _ (relation_disjunction (ueq_step g) Level.eq) u v /\ is_canonical g v.
+
+Instance Proper_Repr : forall g, Proper (Level.eq ==> Level.eq ==> iff) (Repr g).
+Proof.
+intros g; eapply proper_sym_impl_iff_2; [now eauto|now eauto|].
+intros u1 u2 Hu v1 v2 Hv Hrw.
+destruct Hrw as [Hl Hr]; split.
++ clear - Hl Hu Hv; apply clos_rt_rt1n_iff in Hl.
+  revert u2 v2 Hu Hv.
+  induction Hl as [|u w v [H|H] Hl IH]; intros u2 v2 Hu Hv.
+  - rewrite Hv in Hu; clear x Hv.
+    apply rt_step; right; intuition.
+  - rewrite Hu in H; clear u Hu.
+    eapply rt_trans; [apply rt_step; left; eassumption|].
+    apply IH; trivial.
+  - 
++ rewrite <- Hv; assumption.
+Qed.
+
 (* Instance Proper_ult_step *)
 
 (*
@@ -167,8 +186,9 @@ Record Universes := {
   ugraph :> universes;
   ult_trans_wf : well_founded (Basics.flip (ult_step ugraph.(entries)));
   ult_complete : forall u v, ult_step ugraph.(entries) u v -> UMap.In v ugraph.(entries);
-  ueq_canonical : forall u n, UMap.MapsTo u (Canonical n) ugraph.(entries) -> Level.eq u n.(univ)
-(*   unv_gtge_rev : forall u n, UMap.MapsTo u (Canonical n) *)
+  ueq_canonical : forall u n, UMap.MapsTo u (Canonical n) ugraph.(entries) -> Level.eq u n.(univ);
+  unv_gtge_rev : forall u n, UMap.MapsTo u (Canonical n) ugraph.(entries) ->
+    (forall v, UMap.In v n.(gtge) -> )
 }.
 
 Definition tip g u :=
