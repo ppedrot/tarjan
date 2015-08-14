@@ -145,7 +145,7 @@ let check_universes_invariants g =
 Record Universes := {
   ugraph :> universes;
   ult_trans_wf : well_founded (Basics.flip (ult_step ugraph.(entries)));
-  ult_complete : forall u v, ult_step ugraph.(entries) u v -> UMap.In u ugraph.(entries) -> UMap.In v ugraph.(entries);
+  ult_complete : forall u v, ult_step ugraph.(entries) u v -> UMap.In v ugraph.(entries);
   ueq_canonical : forall u n, UMap.MapsTo u (Canonical n) ugraph.(entries) -> Level.eq u n.(univ)
 }.
 
@@ -239,7 +239,8 @@ destruct a; cbn; apply HF.
 intros y r; apply spec.
 Qed.
 
-Lemma repr_is_canonical : forall (g : Universes) u, UMap.In u g.(entries) -> is_canonical g.(entries) (repr g u).(univ).
+Lemma repr_is_canonical : forall (g : Universes) u,
+  UMap.In u g.(entries) -> is_canonical g.(entries) (repr g u).(univ).
 Proof.
 intros g u Hu; unfold repr; revert Hu.
 match goal with [ |- context [Fix _ _ ?F] ] => set (f := F) in * end.
@@ -260,13 +261,15 @@ set (p := (match
          | None => fun _ : None = UMap.find u (entries g) => I
          end eq_refl)); clearbody p.
 revert p.
-set (elt := UMap.find u (entries g)) at 1 2.
+remember (UMap.find u (entries g)) as elt.
 destruct elt as [[n|v]|]; intros p.
 + exists n; [reflexivity|].
   assert (Hrw : Level.eq u (univ n)).
   { apply ueq_canonical in p; assumption. }
   rewrite <- Hrw; assumption.
-+ 
++ eapply IH, ult_complete, ult_step_eq, p; reflexivity.
++ apply F.in_find_iff in Hu; congruence.
+Qed.
 
 
 (* Reindexes the given universe, using the next available index. *)
@@ -325,13 +328,13 @@ refine (
     { apply UMap.add_3 in Hv; [|assumption].
       eapply ult_step_eq; eassumption.
     }
-+ intros v w Hlt Hi.
++ intros v w Hlt.
   destruct (Level.eq_dec u w) as [Hrw|Hd].
   - rewrite <- Hrw; eapply UMapFacts.F.add_in_iff; intuition.
   - apply F.add_neq_in_iff; [assumption|].
     assert (Hc : ~ Level.eq u v).
     { intros Hrw; eelim Hltu; rewrite Hrw; eassumption. }
-    apply g0.(ult_complete) with v; [|eapply F.add_neq_in_iff; eassumption].
+    apply g0.(ult_complete) with v.
     destruct Hlt.
     { eapply ult_step_lt; [|eassumption]; eapply UMap.add_3 in H; eassumption. }
     { eapply ult_step_eq; [eassumption|]; eapply UMap.add_3 in H0; eassumption. }
