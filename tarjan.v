@@ -660,15 +660,9 @@ Fix N.lt_wf_0 (fun count => btT (N.succ count) -> _ -> _ -> btT count + Universe
       let seen' := USet.add n.(univ) r.(btT_seen) in
       let cleaned := get_gtge g n _ in
       let fold v (accu : btT count + Universes) : btT count + Universes :=
-        match accu with
-        | inl r  =>
-          let r := traverse r.(btT_count) r.(btT_countlt) (btT_reset r) v m in
-          match r with
-          | inl r => inl (btT_cast r _)
-          | inr g => inr g
-          end
-        | inr g => inr g
-        end
+        accu >>= fun r =>
+        traverse r.(btT_count) r.(btT_countlt) (btT_reset r) v m >>= fun r' =>
+        inl (btT_cast r _)
       in
       let r := @Build_btT _ r.(btT_traversed) seen' (N.pred count) _ (snd cleaned) in
       USet.fold fold (fst (fst cleaned)) (inl r) >>= fun r => inl (btT_push r u)
