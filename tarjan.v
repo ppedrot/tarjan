@@ -107,6 +107,30 @@ intros u1 u2 Hu Hrw; destruct Hrw.
 rewrite Hu in *; econstructor; eassumption.
 Qed.
 
+Record Repr g u n : Prop :=  {
+  Repr_wit : Level.t;
+  Repr_rel : clos_refl_trans _ (relation_disjunction (ueq_step g) Level.eq) u Repr_wit;
+  Repr_can : UMap.MapsTo Repr_wit (Canonical n) g
+}.
+
+Instance Proper_Repr : forall g, Proper (Level.eq ==> eq ==> iff) (Repr g).
+Proof.
+intros g; eapply proper_sym_impl_iff_2; [now eauto|now eauto|].
+intros u1 u2 Hu n1 n2 Hn Hrw; rewrite <- Hn; clear n2 Hn; rename n1 into n.
+destruct Hrw as [v Hl Hr]; exists v.
++ clear - Hl Hu; apply clos_rt_rt1n_iff in Hl.
+  revert u2 Hu.
+  induction Hl as [|u w v [H|H] Hl IH]; intros u2 Hu.
+  - apply rt_step; right; intuition.
+  - rewrite Hu in H; clear u Hu.
+    eapply rt_trans; [apply rt_step; left; eassumption|].
+    apply IH; trivial.
+  - rewrite H in Hu; clear u H.
+    apply IH; assumption.
++ assumption.
+Qed.
+
+(*
 Definition Repr g u v := clos_refl_trans _ (relation_disjunction (ueq_step g) Level.eq) u v /\ is_canonical g v.
 
 Instance Proper_Repr : forall g, Proper (Level.eq ==> Level.eq ==> iff) (Repr g).
@@ -126,43 +150,6 @@ destruct Hrw as [Hl Hr]; split.
     apply IH; assumption.
 + rewrite <- Hv; assumption.
 Qed.
-
-(* Instance Proper_ult_step *)
-
-(*
-let check_universes_invariants g =
-  let n_edges = ref 0 in
-  let n_nodes = ref 0 in
-  UMap.iter (fun l u ->
-    match u with
-    | Canonical u ->
-      let check_arc strict v =
-        incr n_edges;
-        let v = repr g v in
-        assert (idx_of_can u < idx_of_can v);
-        if u.klvl = v.klvl then
-          assert (List.memq u.univ v.gtge ||
-                  List.memq u (List.map (repr g) v.gtge))
-      in
-      List.iter (check_arc true) u.lt;
-      List.iter (check_arc false) u.le;
-      List.iter (fun v ->
-        let v = repr g v in
-        assert (v.klvl = u.klvl &&
-            (List.memq u.univ v.le ||
-             List.memq u.univ v.lt ||
-             List.memq u (List.map (repr g) v.le) ||
-             List.memq u (List.map (repr g) v.lt)))
-      ) u.gtge;
-      assert (u.status = NoMark);
-      assert (Level.equal l u.univ);
-      assert (u.ilvl > g.index);
-      assert (CList.duplicates Level.equal (u.univ::u.lt@u.le) = []);
-      incr n_nodes
-    | Equiv _ -> assert (not (Level.is_small l)))
-    g.entries;
-  assert (!n_edges = g.n_edges);
-  assert (!n_nodes = g.n_nodes)
 *)
 
 Module Rel.
