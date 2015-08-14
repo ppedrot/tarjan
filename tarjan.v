@@ -654,7 +654,7 @@ Fix N.lt_wf_0 (fun _ => _)
 + apply N.lt_pred_l; congruence.
 + intros v Hv.
   admit.
-+ destruct count', count''; cbn in *; eapply N.lt_trans; eassumption.
++ apply btT_countlt.
 + apply N.lt_pred_l; congruence.
 
 Defined.
