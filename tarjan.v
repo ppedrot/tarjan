@@ -593,6 +593,21 @@ Record btT (count : N) := {
 
 Unset Implicit Arguments.
 
+(*
+Program Definition btT_pred {c} (r : btT c) (p : c <> 0%N) : btT (N.pred c) :=
+{|
+  btT_traversed := r.(btT_traversed);
+  btT_seen := r.(btT_seen);
+  btT_count := N.pred (r.(btT_count));
+  btT_countlt := _;
+  btT_univ := r.(btT_univ)
+|}.
+Next Obligation.
+intros c r p.
+eapply N.lt_pred_l; congruence.
+Qed.
+*)
+
 Program Definition btT_cast {c1 c2} (r : btT c1) (p : N.lt c1 c2) : btT c2 :=
 {|
   btT_traversed := r.(btT_traversed);
@@ -603,7 +618,7 @@ Program Definition btT_cast {c1 c2} (r : btT c1) (p : N.lt c1 c2) : btT c2 :=
 |}.
 Next Obligation.
 intros c1 c2 r p.
-+ eapply N.lt_trans; try eapply btT_countlt; eassumption.
+eapply N.lt_trans; try eapply btT_countlt; eassumption.
 Qed.
 
 Program Definition btT_push {c} (r : btT c) (u : Level.t) : btT c :=
