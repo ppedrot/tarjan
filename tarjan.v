@@ -684,6 +684,69 @@ refine (
 + admit.
 Qed.
 
+Definition backward_traverse (g : Universes) (seen : USet.t)
+  (traversed : list Level.t) (count : N) (u : Level.t) (m : UMap.In u g.(entries)) :
+  (list Level.t * {n : N | N.lt n count} * Universes) + Universes.
+Proof.
+refine (
+Fix N.lt_wf_0 (fun _ => _)
+  (fun count traverse g seen traversed u m =>
+  match count as c return count = c -> _ with
+  | N0 => fun _ => inr g
+  | _ =>
+    fun pf =>
+    let n := repr g u in
+    if USet.mem n.(univ) seen then
+      inl (traversed, exist _ (N.pred count) _, g)
+    else
+      let seen := USet.add n.(univ) seen in
+      let cleaned := get_gtge g n _ in
+      let fold v (accu : (list Level.t * {n : N | N.lt n count} * Universes) + Universes) :=
+        match accu with
+        | inl accu => _
+          match traverse _ _ _ _ _ _ _ with
+          | inl _ => _
+          | inr g => inr g
+          end
+        | inr _ => accu
+        end
+      in
+      let c : {n : N | N.lt n count} := exist _ (N.pred count) _ in
+      let ans := USet.fold fold (fst (fst cleaned)) (inl (traversed, c, snd cleaned)) in
+      match ans with
+      | inl accu => _
+      | inr _ => ans
+      end
+  end eq_refl) count g seen traversed u m
+).
+admit.
+admit.
+admit.
+admit.
+admit.
+
+Defined.
+
+let rec backward_traverse to_revert b_traversed count g x =
+  let x = repr g x in
+  let count = count - 1 in
+  if count < 0 then begin
+    revert_graph to_revert g;
+    raise (AbortBackward g)
+  end;
+  if x.status = NoMark then begin
+    x.status <- Visited;
+    let to_revert = x.univ::to_revert in
+    let gtge, x, g = get_gtge g x in
+    let to_revert, b_traversed, count, g =
+      LSet.fold (fun y (to_revert, b_traversed, count, g) ->
+        backward_traverse to_revert b_traversed count g y)
+        gtge (to_revert, b_traversed, count, g)
+    in
+    to_revert, x.univ::b_traversed, count, g
+  end
+  else to_revert, b_traversed, count, g
+
 End Univ.
 
 Extraction Univ.
@@ -718,24 +781,6 @@ let check_universes_invariants g =
     g.entries;
   assert (!n_edges = g.n_edges);
   assert (!n_nodes = g.n_nodes)
-
-let get_gtge g u =
-  let gtge, chgt_gtge = clean_gtge g u.gtge in
-  if not chgt_gtge then u.gtge, u, g
-  else
-    let u = { u with gtge } in
-    let g = change_node g u in
-    u.gtge, u, g
-
-(* [revert_graph] rollbacks the changes made to mutable fields in
-   nodes in the graph.
-   [to_revert] contains the touched nodes. *)
-let revert_graph to_revert g =
-  List.iter (fun t ->
-    match LMap.find t g.entries with
-    | Equiv _ -> ()
-    | Canonical t ->
-      t.status <- NoMark) to_revert
 
 exception AbortBackward of universes
 exception CycleDetected
