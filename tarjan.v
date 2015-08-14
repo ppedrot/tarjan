@@ -4,6 +4,9 @@ Require Import Program Setoid Morphisms BinNat Relations.
 Obligation Tactic := idtac.
 Set Primitive Projections.
 
+Axiom admit : False.
+Ltac admit := exfalso; exact admit.
+
 Module Univ
   (Level : OrderedType.OrderedType)
   (UMap : FMapInterface.Sfun(Level))
@@ -647,23 +650,39 @@ refine (
 + intros u.
   assert (Hwf := g0.(ult_trans_wf) u).
   induction Hwf as [u Hu IH].
-Admitted.
+  admit.
++ admit.
++ admit.
+Qed.
 
-(* [get_ltle] and [get_gtge] return ltle and gtge arcs.
-   Moreover, if one of these lists is dirty (e.g. points to a
-   non-canonical node), these functions clean this node in the
-   graph by removing some duplicate edges *)
-let get_ltle g u =
-  let ltle, chgt_ltle = clean_ltle g u.ltle in
-  if not chgt_ltle then u.ltle, u, g
-  else
-    let sz = LMap.cardinal u.ltle in
-    let sz2 = LMap.cardinal ltle in
-    let u = { u with ltle } in
-    let g = change_node g u in
-    let g = { g with n_edges = g.n_edges + sz2 - sz } in
-    u.ltle, u, g
-
+Definition get_gtge (g : Universes) (n : canonical_node)
+  (m : forall u, USet.In u n.(gtge) -> UMap.In u g.(entries)) :
+  USet.t * canonical_node * Universes.
+Proof.
+refine (
+  let cleaned := clean_gtge g n.(gtge) m in
+  if snd cleaned then
+    let n := {|
+      univ := n.(univ);
+      Univ.gtge := fst cleaned;
+      ltle := n.(ltle);
+      rank := n.(rank);
+      klvl := n.(klvl);
+      ilvl := n.(ilvl)
+    |} in
+    let g := {|
+      entries := UMap.add n.(univ) (Canonical n) g.(entries);
+      index := g.(index);
+      n_nodes := g.(n_nodes);
+      n_edges := g.(n_edges)
+    |} in
+    (fst cleaned, n, {| ugraph := g |})
+  else (n.(gtge), n, g)
+).
++ admit.
++ admit.
++ admit.
+Qed.
 
 End Univ.
 
