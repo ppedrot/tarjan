@@ -706,7 +706,7 @@ Fix N.lt_wf_0 (fun _ => _)
         match accu with
         | inl (traversed, count', seen'', g')  =>
           let r := traverse (proj1_sig count') (proj2_sig count') g' seen'' traversed v _ in _
-        | inr _ => accu
+        | inr g => inr g
         end
       in
       let c : {n : N | N.lt n count} := exist _ (N.pred count) _ in
@@ -714,7 +714,7 @@ Fix N.lt_wf_0 (fun _ => _)
       match ans with
       | inl (traversed, count', seen'', g')  =>
         inl (cons n.(univ) traversed, count', seen'', g')
-      | inr _ => ans
+      | inr g => inr g
       end
   end eq_refl) count g seen traversed u m
 ).
