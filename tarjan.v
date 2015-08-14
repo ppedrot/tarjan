@@ -640,6 +640,8 @@ Next Obligation.
 intros; apply N.lt_succ_diag_r.
 Qed.
 
+Notation "t >>= u" := (match t return _ with inl x => u x | inr y => inr y end) (at level 45, u at level 200, right associativity).
+
 Definition backward_traverse (g : Universes)
   (count : N) (u : Level.t) (m : UMap.In u g.(entries)) :
   btT count + Universes.
@@ -669,11 +671,7 @@ Fix N.lt_wf_0 (fun count => btT (N.succ count) -> _ -> _ -> btT count + Universe
         end
       in
       let r := @Build_btT _ r.(btT_traversed) seen' (N.pred count) _ (snd cleaned) in
-      let ans := USet.fold fold (fst (fst cleaned)) (inl r) in
-      match ans return _ with
-      | inl r  => inl (btT_push r u)
-      | inr g => inr g
-      end
+      USet.fold fold (fst (fst cleaned)) (inl r) >>= fun r => inl (btT_push r u)
   end eq_refl) count
     {| btT_count := count; btT_univ := g; btT_traversed := nil; btT_seen := USet.empty |} u m
 ).
@@ -684,12 +682,6 @@ Fix N.lt_wf_0 (fun count => btT (N.succ count) -> _ -> _ -> btT count + Universe
 + apply N.lt_pred_l; congruence.
 + apply N.lt_succ_diag_r.
 Qed.
-
-
-apply (btT_cast r).
-+ apply N.lt_pred_l; congruence.
-
-Defined.
 
 let rec backward_traverse to_revert b_traversed count g x =
   let x = repr g x in
