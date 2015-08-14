@@ -172,11 +172,16 @@ Existing Instance Rel.Equivalence_eq.
 
 Record Universes := {
   ugraph :> universes;
-  ult_trans_wf : well_founded (Basics.flip (ult_step ugraph.(entries)));
-  ult_complete : forall u v, ult_step ugraph.(entries) u v -> UMap.In v ugraph.(entries);
-  ueq_canonical : forall u n, UMap.MapsTo u (Canonical n) ugraph.(entries) -> Level.eq u n.(univ);
-  unv_gtge_rev : forall u n, UMap.MapsTo u (Canonical n) ugraph.(entries) ->
-    (forall v, UMap.In v n.(gtge) -> )
+  ult_trans_wf :
+    well_founded (Basics.flip (ult_step ugraph.(entries)));
+  ult_complete : forall u v,
+    ult_step ugraph.(entries) u v -> UMap.In v ugraph.(entries);
+  ueq_canonical : forall u n,
+    UMap.MapsTo u (Canonical n) ugraph.(entries) -> Level.eq u n.(univ);
+  unv_gtge_rev : forall u v m n,
+    UMap.MapsTo u (Canonical n) ugraph.(entries) ->
+    UMap.In v n.(ltle) -> Repr ugraph.(entries) v m -> n.(klvl) = m.(klvl) ->
+    exists p, USet.In p.(univ) m.(gtge) /\ Repr ugraph.(entries) u p
 }.
 
 Definition tip g u :=
