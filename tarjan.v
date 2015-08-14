@@ -689,7 +689,7 @@ Definition backward_traverse (g : Universes) (seen : USet.t)
   (list Level.t * {n : N | N.lt n count} * USet.t * Universes) + Universes.
 Proof.
 refine (
-let T := (list Level.t * {n : N | N.lt n count} * USet.t * Universes)%type in
+let T count := (list Level.t * {n : N | N.lt n count} * USet.t * Universes)%type in
 Fix N.lt_wf_0 (fun _ => _)
   (fun count traverse g seen traversed u m =>
   match count as c return count = c -> _ with
@@ -702,7 +702,7 @@ Fix N.lt_wf_0 (fun _ => _)
     else
       let seen' := USet.add n.(univ) seen in
       let cleaned := get_gtge g n _ in
-      let fold v (accu : T + Universes) : T + Universes :=
+      let fold v (accu : T count + Universes) : T count + Universes :=
         match accu with
         | inl (traversed, count', seen'', g')  => _
           match traverse (proj1_sig count') _ g' seen'' traversed _ _ with
@@ -713,7 +713,7 @@ Fix N.lt_wf_0 (fun _ => _)
         end
       in
       let c : {n : N | N.lt n count} := exist _ (N.pred count) _ in
-      let ans := USet.fold fold (fst (fst cleaned)) (inl (_, _, _, _)) in
+      let ans := USet.fold fold (fst (fst cleaned)) (inl (traversed, c, seen', snd cleaned)) in
       match ans with
       | inl accu => _
       | inr _ => ans
