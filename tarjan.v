@@ -524,6 +524,7 @@ refine (
 ).
 Defined.
 
+(*
 Lemma clean_ltle_spec : forall g ltle m,
   let ans := clean_ltle g ltle m in
   (forall u, UMap.In u (fst ans) -> is_canonical g.(entries) u)
@@ -549,21 +550,21 @@ revert m Hu; apply fold_rec; cbn in *.
   rewrite <- Heq.
 
 Qed.
+*)
 
 Definition clean_gtge (g : Universes) (gtge : USet.t)
   (m : forall u, USet.In u gtge -> UMap.In u g.(entries)) : USet.t * bool.
 Proof.
 refine (
-  let fold u strict accu :=
-    let v := (repr g u _).(univ) in
-    match Level.compare u v with
-    | OrderedType.EQ _ => accu
-    | _ => (USet.add v (USet.remove u (fst accu)), true)
+  let fold u accu :=
+    let v := (repr g u).(univ) in
+    match Level.eq_dec u v with
+    | left _ => accu
+    | right _ => (USet.add v (USet.remove u (fst accu)), true)
     end
   in
-  set_fold_strong gtge fold (gtge, false)
+  USet.fold fold gtge (gtge, false)
 ).
-+ apply m; assumption.
 Defined.
 
 Definition get_ltle (g : Universes) (n : canonical_node)
