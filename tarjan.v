@@ -707,7 +707,8 @@ Fix N.lt_wf_0 (fun _ => _)
         | inl (traversed, count', seen'', g')  =>
           let r := traverse (proj1_sig count') (proj2_sig count') g' seen'' traversed v _ in
           match r with
-          | inl (traversed, count'', seen'', g') => inl (traversed, exist _ (proj1_sig count'') _, seen'', g')
+          | inl (traversed, count'', seen'', g') =>
+            inl (traversed, exist _ (proj1_sig count'') _, seen'', g')
           | inr g => inr g
           end
         | inr g => inr g
@@ -725,9 +726,8 @@ Fix N.lt_wf_0 (fun _ => _)
 + apply N.lt_pred_l; congruence.
 + admit.
 + admit.
-+ exact r.
-admit.
-admit.
++ destruct count', count''; cbn in *; eapply N.lt_trans; eassumption.
++
 
 Defined.
 
