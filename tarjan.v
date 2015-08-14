@@ -122,7 +122,8 @@ destruct Hrw as [Hl Hr]; split.
   - rewrite Hu in H; clear u Hu.
     eapply rt_trans; [apply rt_step; left; eassumption|].
     apply IH; trivial.
-  - 
+  - rewrite H in Hu; clear u H.
+    apply IH; assumption.
 + rewrite <- Hv; assumption.
 Qed.
 
