@@ -103,7 +103,6 @@ intros u1 u2 Hu Hrw; destruct Hrw.
 rewrite Hu in *; econstructor; eassumption.
 Qed.
 
-
 (* Instance Proper_ult_step *)
 
 (*
@@ -272,6 +271,50 @@ destruct elt as [[n|v]|]; intros p.
 + apply F.in_find_iff in Hu; congruence.
 Qed.
 
+Lemma is_canonical_minimal : forall (g : Universes) u v,
+  is_canonical g.(entries) u -> ~ ueq_step g.(entries) u v.
+Proof.
+intros g u v Hu Hs.
+destruct Hs as [w Hrw Hw].
+destruct Hu as [n Hn Hu].
+apply UMap.find_1 in Hw; apply UMap.find_1 in Hu; congruence.
+Qed.
+
+(*
+Lemma is_canonical_unique : forall (g : Universes) u v,
+  is_canonical g.(entries) u -> is_canonical g.(entries) v -> Rel.eq g u v -> Level.eq u v.
+Proof.
+intros g u v Hu Hv HR.
+apply clos_rst_rst1n_iff in HR.
+induction HR as [u|u v w [HR|HR] H].
++ reflexivity.
++ elim (is_canonical_minimal g u v); assumption.
++ assert (H' : clos_refl_trans _ (ueq_step (entries g)) v w).
+  { clear - H Hv; (* apply clos_rst_rst1n_iff, clos_rst_rstn1_iff in H. *)
+    induction H as [|v w u [H|H] _ IH].
+    + apply rt_refl.
+    + apply rt_trans with w; [apply rt_step|]; now intuition.
+    + specialize (IH Hv); apply clos_rt_rt1n_iff in IH.
+      revert v H; induction IH.
+      - intros v Hx; elim (is_canonical_minimal g x v); assumption.
+      - intros v Hx.
+        assert (Hrw : Level.eq v y).
+        { destruct H as [w ? H']; destruct Hx as [p ? H''].
+          apply UMap.find_1 in H'; apply UMap.find_1 in H''.
+          replace p with w in * by (intuition congruence); clear H''.
+          intuition eauto. }
+        clear - IH Hrw; revert v Hrw.
+        induction IH; intros v Hrw.
+        
+admit.
+  }
+  clear H; rename H' into H.
+
+destruct HR as [x Hrw Hx].
+  rewrite Hrw in *; clear u Hrw; rename x into u.
+  
+Qed.
+*)
 
 (* Reindexes the given universe, using the next available index. *)
 (* let use_index g u =
