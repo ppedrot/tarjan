@@ -429,6 +429,7 @@ clearbody l; revert Hin; induction l as [|x l IHl]; intros Hin.
 Defined.
  *)
 
+(*
 Lemma map_fold_strong_1 : forall A (m : UMap.t A) x l,
   (forall y e, SetoidList.InA (UMap.eq_key_elt (elt:=A)) (y, e) (x :: l) -> UMap.MapsTo y e m) ->
   UMap.MapsTo (fst x) (snd x) m.
@@ -443,6 +444,7 @@ Lemma map_fold_strong_2 : forall A (m : UMap.t A) x l,
 Proof.
 intros; apply H, SetoidList.InA_cons_tl, H0.
 Qed.
+*)
 
 (*
 (** Inefficient, but UMap does not feature the right interface *)
@@ -530,45 +532,29 @@ Proof.
 refine (
   let fold u strict accu :=
     let v := (repr g u).(univ) in
-    match Level.eq_dec u v with
-    | left _ => accu
-    | right _ =>
-      let accu := UMap.remove u (fst accu) in
-      if andb (negb strict) (UMap.mem v accu) then (accu, true)
-      else (UMap.add v strict accu, true)
-    end
+    (UMap.add v strict (fst accu), if Level.eq_dec u v then snd accu else true)
   in
-  UMap.fold fold ltle (ltle, false)
+  UMap.fold fold ltle (UMap.empty bool, false)
 ).
 Defined.
 
-(*
-Lemma clean_ltle_spec : forall g ltle m,
+Lemma clean_ltle_spec : forall (g : Universes) ltle
+  (m : forall u, UMap.In u ltle -> UMap.In u g.(entries)),
   let ans := clean_ltle g ltle m in
-  (forall u, UMap.In u (fst ans) -> is_canonical g.(entries) u)
-(*   /\ (SetoidList.equivlistA (RelationPairs.RelProd (Rel.eq g) eq) (UMap.elements ltle) (UMap.elements (fst ans))) *)
-.
+  snd ans = false -> UMap.Equal (fst ans) ltle.
 Proof.
-intros g us m ans u Hu.
+intros g init m ans.
 unfold clean_ltle in ans.
-let t := eval red in ans in match t with UMap.fold ?F _ _ => set (f := F) in * end.
-unfold ans in *; clear ans.
-revert u m Hu.
-apply fold_rec; cbn in *; clear.
-+ intros.
-
-(* assert (Hst : forall u, UMap.In u us -> UMap.In u (fst (UMap.fold f us (accu, false))) -> is_canonical (entries g) u). *)
-revert m Hu; apply fold_rec; cbn in *.
-+ cbn in *; intros ? He _ _ ? [? ?] _.
-  eelim He; eassumption.
-+ clear u; intros u b [accu ?] vs ws Hu Hn Hvw IH m v Hv Hi; cbn in *.
-  unfold f in *.
-  destruct (Level.eq_dec u (univ (repr g u))) as [Heq|Hdf]; cbn in *.
-  apply repr_is_canonical in Heq.
-  rewrite <- Heq.
-
+unfold ans; apply fold_rec; cbn in *; clear.
++ intros m Hm _ x; rewrite F.empty_o.
+  symmetry; apply F.not_find_in_iff.
+  intros [b Hb]; elim (Hm x b); assumption.
++ intros u b [m b'] m1 m2 Hm Hm1 Hm2 IH H.
+  destruct F.eq_dec; cbn in *.
+  - specialize (IH H); subst.
+    rewrite IH, <- e; symmetry; exact Hm2.
+  - discriminate.
 Qed.
-*)
 
 Definition clean_gtge (g : Universes) (gtge : USet.t)
   (m : forall u, USet.In u gtge -> UMap.In u g.(entries)) : USet.t * bool.
