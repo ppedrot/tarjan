@@ -630,8 +630,8 @@ Program Definition btT_push {c} (r : btT c) (u : Level.t) : btT c :=
   btT_univ := r.(btT_univ)
 |}.
 
-Definition backward_traverse (g : Universes) (seen : USet.t)
-  (traversed : list Level.t) (count : N) (u : Level.t) (m : UMap.In u g.(entries)) :
+Definition backward_traverse (g : Universes)
+  (count : N) (u : Level.t) (m : UMap.In u g.(entries)) :
   btT count + Universes.
 Proof.
 refine (
@@ -664,7 +664,7 @@ Fix N.lt_wf_0 (fun _ => _)
       | inl r  => inl (btT_push r u)
       | inr g => inr g
       end
-  end eq_refl) count g seen traversed u m
+  end eq_refl) count g USet.empty nil u m
 ).
 + apply N.lt_pred_l; congruence.
 + intros v Hv.
