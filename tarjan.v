@@ -572,13 +572,13 @@ Definition get_ltle (g : Universes) (n : canonical_node)
   UMap.t bool * canonical_node * Universes.
 Proof.
 refine (
-  let (ltle, chgt_ltle) := clean_ltle g n.(ltle) m in
-  if chgt_ltle then
+  let cleaned := clean_ltle g n.(ltle) m in
+  if snd cleaned then
     let sz := N.of_nat (UMap.cardinal n.(Univ.ltle)) in
-    let sz2 := N.of_nat (UMap.cardinal ltle) in
+    let sz2 := N.of_nat (UMap.cardinal (fst cleaned)) in
     let n := {|
       univ := n.(univ);
-      Univ.ltle := ltle;
+      Univ.ltle := fst cleaned;
       gtge := n.(gtge);
       rank := n.(rank);
       klvl := n.(klvl);
@@ -590,7 +590,7 @@ refine (
       n_nodes := g.(n_nodes);
       n_edges := (g.(n_edges) + sz2) - sz
     |} in
-    (ltle, n, {| ugraph := g |})
+    (fst cleaned, n, {| ugraph := g |})
   else (n.(Univ.ltle), n, g)
 ).
 + intros u.
