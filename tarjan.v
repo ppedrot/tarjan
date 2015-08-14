@@ -705,7 +705,7 @@ Fix N.lt_wf_0 (fun _ => _)
       let fold v (accu : T count + Universes) : T count + Universes :=
         match accu with
         | inl (traversed, count', seen'', g')  =>
-          let r := traverse (proj1_sig count') _ g' seen'' traversed v _ in _
+          let r := traverse (proj1_sig count') (proj2_sig count') g' seen'' traversed v _ in _
         | inr _ => accu
         end
       in
