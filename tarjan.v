@@ -151,8 +151,10 @@ Record Universes := {
 
 Module Rel.
 
+SearchAbout relation.
+
 Definition eq (g : Universes) (u v : Level.t) :=
-  clos_refl_sym_trans _ (ueq_step g.(entries)) u v.
+  clos_refl_sym_trans _ (relation_disjunction (ueq_step g.(entries)) Level.eq) u v.
 
 End Rel.
 
@@ -272,8 +274,8 @@ destruct elt as [[n|v]|]; intros p.
 + apply F.in_find_iff in Hu; congruence.
 Qed.
 
-Lemma is_canonical_minimal : forall (g : Universes) u v,
-  is_canonical g.(entries) u -> ~ ueq_step g.(entries) u v.
+Lemma is_canonical_minimal : forall g u v,
+  is_canonical g u -> ~ ueq_step g u v.
 Proof.
 intros g u v Hu Hs.
 destruct Hs as [w Hrw Hw].
@@ -281,6 +283,10 @@ destruct Hu as [n Hn Hu].
 apply UMap.find_1 in Hw; apply UMap.find_1 in Hu; congruence.
 Qed.
 
+(* Lemma repr_stable : forall (g : Universes) u,
+  UMap.In u g.(entries) -> Rel.eq g u (repr g u).(univ).
+Proof.
+ *)
 (*
 Lemma is_canonical_unique : forall (g : Universes) u v,
   is_canonical g.(entries) u -> is_canonical g.(entries) v -> Rel.eq g u v -> Level.eq u v.
@@ -566,14 +572,15 @@ Lemma clean_ltle_equiv : forall (g : Universes) ltle
 Proof.
 intros g init m ans.
 unfold clean_ltle in ans.
-unfold ans; apply fold_rec; cbn in *; clear.
+unfold ans; apply fold_rec; cbn [fst snd] in *; clear.
 + intros m Hm [accu b]; cbn in *.
   rewrite elements_empty.
   apply elements_Empty in Hm; rewrite Hm; intuition.
-+ intros u b [m b'] m1 m2 Hm Hm1 Hm2 IH [v b0]; cbn in *.
++ intros u b [m b'] m1 m2 Hm Hm1 Hm2 IH [v b0]; cbn [fst snd] in *.
   destruct (Level.eq_dec u v) as [Hrw|Hd].
   - split; intro HIn.
     { apply SetoidList.InA_eqA with (u, b).
+
 typeclasses eauto.
 
 
