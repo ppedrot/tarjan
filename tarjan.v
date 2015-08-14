@@ -145,23 +145,15 @@ let check_universes_invariants g =
   assert (!n_nodes = g.n_nodes)
 *)
 
-Record Universes := {
-  ugraph :> universes;
-  ult_trans_wf : well_founded (Basics.flip (ult_step ugraph.(entries)));
-  ult_complete : forall u v, ult_step ugraph.(entries) u v -> UMap.In v ugraph.(entries);
-  ueq_canonical : forall u n, UMap.MapsTo u (Canonical n) ugraph.(entries) -> Level.eq u n.(univ)
-(*   unv_gtge_rev : forall u n, UMap.MapsTo u (Canonical n) *)
-}.
-
 Module Rel.
 
-Definition eq (g : Universes) (u v : Level.t) :=
-  clos_refl_sym_trans _ (relation_disjunction (ueq_step g.(entries)) Level.eq) u v.
+Definition eq g (u v : Level.t) :=
+  clos_refl_sym_trans _ (relation_disjunction (ueq_step g) Level.eq) u v.
 
-Instance Equivalence_eq : forall (g : Universes), Equivalence (eq g).
+Instance Equivalence_eq : forall g, Equivalence (eq g).
 Proof.
 intros g.
-destruct (clos_rst_is_equiv _ (relation_disjunction (ueq_step g.(entries)) Level.eq)); split.
+destruct (clos_rst_is_equiv _ (relation_disjunction (ueq_step g) Level.eq)); split.
 + apply equiv_refl.
 + apply equiv_sym.
 + apply equiv_trans.
@@ -170,6 +162,14 @@ Qed.
 End Rel.
 
 Existing Instance Rel.Equivalence_eq.
+
+Record Universes := {
+  ugraph :> universes;
+  ult_trans_wf : well_founded (Basics.flip (ult_step ugraph.(entries)));
+  ult_complete : forall u v, ult_step ugraph.(entries) u v -> UMap.In v ugraph.(entries);
+  ueq_canonical : forall u n, UMap.MapsTo u (Canonical n) ugraph.(entries) -> Level.eq u n.(univ)
+(*   unv_gtge_rev : forall u n, UMap.MapsTo u (Canonical n) *)
+}.
 
 Definition tip g u :=
   {| univ := u;
