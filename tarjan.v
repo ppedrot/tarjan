@@ -156,7 +156,18 @@ SearchAbout relation.
 Definition eq (g : Universes) (u v : Level.t) :=
   clos_refl_sym_trans _ (relation_disjunction (ueq_step g.(entries)) Level.eq) u v.
 
+Instance Equivalence_eq : forall (g : Universes), Equivalence (eq g).
+Proof.
+intros g.
+destruct (clos_rst_is_equiv _ (relation_disjunction (ueq_step g.(entries)) Level.eq)); split.
++ apply equiv_refl.
++ apply equiv_sym.
++ apply equiv_trans.
+Qed.
+
 End Rel.
+
+Existing Instance Rel.Equivalence_eq.
 
 (* Low-level function : makes u an alias for v.
    Does not removes edges from n_edges, but decrements n_nodes.
