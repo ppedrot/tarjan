@@ -288,6 +288,15 @@ destruct elt as [[n|v]|]; intros p.
 + apply F.in_find_iff in Hu; congruence.
 Qed.
 
+Lemma repr_is_In : forall (g : Universes) u,
+  UMap.In u g.(entries) -> UMap.In (repr g u).(univ) g.(entries).
+Proof.
+intros g u Hu.
+assert (is_canonical g.(entries) (repr g u).(univ)) by apply repr_is_canonical, Hu.
+destruct H as [n Hn H].
+exists (Canonical n); assumption.
+Qed.
+
 Lemma is_canonical_minimal : forall g u v,
   is_canonical g u -> ~ ueq_step g u v.
 Proof.
@@ -705,7 +714,7 @@ Fix N.lt_wf_0 (fun _ => _)
       let fold v (accu : T count + Universes) : T count + Universes :=
         match accu with
         | inl (traversed, count', seen'', g')  =>
-          let r := traverse (proj1_sig count') (proj2_sig count') g' seen'' traversed v _ in
+          let r := traverse (proj1_sig count') (proj2_sig count') g' seen'' traversed v m in
           match r with
           | inl (traversed, count'', seen'', g') =>
             inl (traversed, exist _ (proj1_sig count'') _, seen'', g')
@@ -716,7 +725,7 @@ Fix N.lt_wf_0 (fun _ => _)
       in
       let c : {n : N | N.lt n count} := exist _ (N.pred count) _ in
       let ans := USet.fold fold (fst (fst cleaned)) (inl (traversed, c, seen', snd cleaned)) in
-      match ans with
+      match ans return _ with
       | inl (traversed, count', seen'', g')  =>
         inl (cons n.(univ) traversed, count', seen'', g')
       | inr g => inr g
@@ -724,10 +733,10 @@ Fix N.lt_wf_0 (fun _ => _)
   end eq_refl) count g seen traversed u m
 ).
 + apply N.lt_pred_l; congruence.
-+ admit.
-+ admit.
++ intros v Hv.
+  admit.
 + destruct count', count''; cbn in *; eapply N.lt_trans; eassumption.
-+
++ apply N.lt_pred_l; congruence.
 
 Defined.
 
