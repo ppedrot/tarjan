@@ -226,6 +226,49 @@ refine (
   - trivial.
 Defined.
 
+Lemma Fix_spec : forall A (R : relation A) (p : well_founded R) (P : A -> Type)
+  (F : (forall x : A, (forall y : A, R y x -> P y) -> P x)) (Q : forall x, P x -> Type),
+  (forall (x : A) a, (forall y r, Q y (Fix_F P F (a y r))) -> Q x (F x (fun y r => @Fix_F _ _ P F y (a y r)))) ->
+  forall x, Q x (Fix p P F x).
+Proof.
+intros A R p P F Q HF x; unfold Fix.
+set (a := p x); clearbody a.
+revert x a.
+refine (fix spec x a {struct a} := _).
+destruct a; cbn; apply HF.
+intros y r; apply spec.
+Qed.
+
+Lemma repr_is_canonical : forall (g : Universes) u, UMap.In u g.(entries) -> is_canonical g.(entries) (repr g u).(univ).
+Proof.
+intros g u Hu; unfold repr; revert Hu.
+match goal with [ |- context [Fix _ _ ?F] ] => set (f := F) in * end.
+apply Fix_spec; clear u; intros u a IH Hu.
+unfold f at 1.
+set (p := (match
+           UMap.find u (entries g) as o
+           return
+             (o = UMap.find u (entries g) ->
+              match o with
+              | Some n => UMap.MapsTo u n (entries g)
+              | None => True
+              end)
+         with
+         | Some v =>
+             fun Heqelt : Some v = UMap.find u (entries g) =>
+             UMap.find_2 (eq_sym Heqelt)
+         | None => fun _ : None = UMap.find u (entries g) => I
+         end eq_refl)); clearbody p.
+revert p.
+set (elt := UMap.find u (entries g)) at 1 2.
+destruct elt as [[n|v]|]; intros p.
++ exists n; [reflexivity|].
+  assert (Hrw : Level.eq u (univ n)).
+  { apply ueq_canonical in p; assumption. }
+  rewrite <- Hrw; assumption.
++ 
+
+
 (* Reindexes the given universe, using the next available index. *)
 (* let use_index g u =
   let u = repr g u in
@@ -336,6 +379,7 @@ Proof.
 intros; apply H, SetoidList.InA_cons_tl, H0.
 Qed.
 
+(*
 (** Inefficient, but UMap does not feature the right interface *)
 Definition map_fold_strong {A B} (m : UMap.t A)
   (f : forall (k : UMap.key) (x : A), UMap.MapsTo k x m -> B -> B)
@@ -350,6 +394,7 @@ clearbody l; revert Hin; induction l as [|x l IHl]; intros Hin.
   - eapply map_fold_strong_1; eassumption.
   - eapply map_fold_strong_2; eassumption.
 Defined.
+*)
 
 (* Definition map_fold_strong {A B} (m : UMap.t A)
   (f : forall (k : UMap.key) (x : A), UMap.MapsTo k x m -> B -> B)
@@ -357,6 +402,7 @@ Defined.
     List.fold_right (fun p accu => match p with exist _ (x, k) p => f x k p accu end) i (map_elements_dep m).
  *)
 
+(*
 Lemma map_fold_strong_rec : forall {A B P}
   (f : forall m (k : UMap.key) (x : A), UMap.MapsTo k x m -> B -> B)
   (i : B),
@@ -411,24 +457,24 @@ Definition set_fold_strong {A} (m : USet.t)
   (f : forall (k : USet.elt), USet.In k m -> A -> A)
   (i : A) : A :=
     List.fold_right (fun p accu => match p with exist _ x p => f x p accu end) i (set_elements_dep m).
+*)
 
 Definition clean_ltle (g : Universes) (ltle : UMap.t bool)
   (m : forall u, UMap.In u ltle -> UMap.In u g.(entries)) : UMap.t bool * bool.
 Proof.
 refine (
-  let fold u strict p accu :=
-    let v := (repr g u _).(univ) in
-    match Level.compare u v with
-    | OrderedType.EQ _ => accu
-    | OrderedType.LT _ | OrderedType.GT _ =>
+  let fold u strict accu :=
+    let v := (repr g u).(univ) in
+    match Level.eq_dec u v with
+    | left _ => accu
+    | right _ =>
       let accu := UMap.remove u (fst accu) in
       if andb (negb strict) (UMap.mem v accu) then (accu, true)
       else (UMap.add v strict accu, true)
     end
   in
-  map_fold_strong ltle fold (ltle, false)
+  UMap.fold fold ltle (ltle, false)
 ).
-+ apply m; exists strict; assumption.
 Defined.
 
 Lemma clean_ltle_spec : forall g ltle m,
@@ -437,13 +483,20 @@ Lemma clean_ltle_spec : forall g ltle m,
 (*   /\ (SetoidList.equivlistA (RelationPairs.RelProd (Rel.eq g) eq) (UMap.elements ltle) (UMap.elements (fst ans))) *)
 .
 Proof.
-intros g us m ans.
-
+intros g us m ans u Hu.
 unfold clean_ltle in ans.
-let t := eval red in ans in match t with map_fold_strong us ?F _ => set (f := F) in * end.
-unfold ans; clear ans.
-pattern (map_fold_strong us f (us, false)).
-apply map_fold_strong_rec; cbn in *.
+let t := eval red in ans in match t with UMap.fold ?F _ _ => set (f := F) in * end.
+unfold ans in *; clear ans.
+set (accu := us) in Hu at 2.
+
+assert (Hst : forall u, UMap.In u us -> UMap.In u (fst (UMap.fold f us (accu, false))) -> is_canonical (entries g) u).
+revert m; apply fold_rec; cbn in *.
++ cbn in *; intros ? He _ ? [? ?] _.
+  eelim He; eassumption.
++ clear; intros u b [accu b'] vs ws Hu Hn Hvw IH m v Hv Hi; cbn in *.
+  unfold f in *.
+  destruct (Level.eq_dec u (univ (repr g u))) as [Heq|Hdf]; cbn in *.
+  
 
 Qed.
 
