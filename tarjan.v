@@ -704,18 +704,16 @@ Fix N.lt_wf_0 (fun _ => _)
       let cleaned := get_gtge g n _ in
       let fold v (accu : T count + Universes) : T count + Universes :=
         match accu with
-        | inl (traversed, count', seen'', g')  => _
-          match traverse (proj1_sig count') _ g' seen'' traversed v _ with
-          | inl r => inl r
-          | inr g => inr g
-          end
+        | inl (traversed, count', seen'', g')  =>
+          let r := traverse (proj1_sig count') _ g' seen'' traversed v _ in _
         | inr _ => accu
         end
       in
       let c : {n : N | N.lt n count} := exist _ (N.pred count) _ in
       let ans := USet.fold fold (fst (fst cleaned)) (inl (traversed, c, seen', snd cleaned)) in
       match ans with
-      | inl accu => _
+      | inl (traversed, count', seen'', g')  =>
+        inl (cons n.(univ) traversed, count', seen'', g')
       | inr _ => ans
       end
   end eq_refl) count g seen traversed u m
