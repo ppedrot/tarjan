@@ -171,46 +171,11 @@ End Rel.
 
 Existing Instance Rel.Equivalence_eq.
 
-(* Low-level function : makes u an alias for v.
-   Does not removes edges from n_edges, but decrements n_nodes.
-   u should be entered as canonical before.  *)
-(*
-let enter_equiv g u v =
-  { entries =
-      UMap.modify u (fun _ a ->
-        match a with
-        | Canonical n ->
-          n.status <- NoMark;
-          Equiv v
-        | _ -> assert false) g.entries;
-    index = g.index;
-    n_nodes = g.n_nodes - 1;
-    n_edges = g.n_edges }
-*)
-
-(* Low-level function : changes data associated with a canonical node.
-   Resets the mutable fields in the old record, in order to avoid breaking
-   invariants for other users of this record.
-   n.univ should already been inserted as a canonical node. *)
-(*
-let change_node g n =
-  { g with entries =
-      UMap.modify n.univ
-        (fun _ a ->
-          match a with
-          | Canonical n' ->
-            n'.status <- NoMark;
-            Canonical n
-          | _ -> assert false)
-        g.entries }
-*)
-
 Definition tip g u :=
   {| univ := u;
     ltle := UMap.empty bool;
     gtge := USet.empty;
     rank := 0;
-  (*         predicative = Level.is_set u; *)
     klvl := 0;
     ilvl := g.(index)
   |}.
