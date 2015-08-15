@@ -372,15 +372,21 @@ apply F.add_mapsto_iff in Hv; destruct Hv as [Hv|Hv].
 Qed.
 
 Next Obligation.
-intros g u ? ? ? ? ? v w m n Hv Hw Hr.
+intros g u ? ? ? ? ? v w m n Hv Hw Hr; cbn in *.
 destruct (Level.eq_dec u v) as [Hrw|Hd].
 + exfalso; rewrite <- Hrw in Hv; clear v Hrw.
   apply F.add_mapsto_iff in Hv; intuition.
   replace m with can in * by congruence; clear m.
   apply F.empty_in_iff in Hw; assumption.
-+ apply (g.(unv_topo_rel) v w); try assumption.
-  - eapply UMap.add_3 in Hv; eassumption.
-  - 
++ assert (Hv' : UMap.MapsTo v (Canonical m) (entries g)).
+  { eapply UMap.add_3 in Hv; eassumption. }
+  apply (g.(unv_topo_rel) v w); try assumption.
+  destruct Hr as [z Hz Hr]; exists z.
+  { apply clos_rt_rt1n_iff in Hz; induction Hz.
+    + admit.
+    + admit.
+  }
+  eapply UMap.add_3.
 
 Qed.
 
