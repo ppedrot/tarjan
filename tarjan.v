@@ -137,28 +137,6 @@ destruct Hrw as [v Hl Hr]; exists v.
 + assumption.
 Qed.
 
-(*
-Definition Repr g u v := clos_refl_trans _ (relation_disjunction (ueq_step g) Level.eq) u v /\ is_canonical g v.
-
-Instance Proper_Repr : forall g, Proper (Level.eq ==> Level.eq ==> iff) (Repr g).
-Proof.
-intros g; eapply proper_sym_impl_iff_2; [now eauto|now eauto|].
-intros u1 u2 Hu v1 v2 Hv Hrw.
-destruct Hrw as [Hl Hr]; split.
-+ clear - Hl Hu Hv; apply clos_rt_rt1n_iff in Hl.
-  revert u2 v2 Hu Hv.
-  induction Hl as [|u w v [H|H] Hl IH]; intros u2 v2 Hu Hv.
-  - rewrite Hv in Hu; clear x Hv.
-    apply rt_step; right; intuition.
-  - rewrite Hu in H; clear u Hu.
-    eapply rt_trans; [apply rt_step; left; eassumption|].
-    apply IH; trivial.
-  - rewrite H in Hu; clear u H.
-    apply IH; assumption.
-+ rewrite <- Hv; assumption.
-Qed.
-*)
-
 Module Rel.
 
 Definition eq g (u v : Level.t) :=
@@ -310,46 +288,6 @@ destruct Hu as [n Hn Hu].
 apply UMap.find_1 in Hw; apply UMap.find_1 in Hu; congruence.
 Qed.
 
-(* Lemma repr_stable : forall (g : Universes) u,
-  UMap.In u g.(entries) -> Rel.eq g u (repr g u).(univ).
-Proof.
- *)
-(*
-Lemma is_canonical_unique : forall (g : Universes) u v,
-  is_canonical g.(entries) u -> is_canonical g.(entries) v -> Rel.eq g u v -> Level.eq u v.
-Proof.
-intros g u v Hu Hv HR.
-apply clos_rst_rst1n_iff in HR.
-induction HR as [u|u v w [HR|HR] H].
-+ reflexivity.
-+ elim (is_canonical_minimal g u v); assumption.
-+ assert (H' : clos_refl_trans _ (ueq_step (entries g)) v w).
-  { clear - H Hv; (* apply clos_rst_rst1n_iff, clos_rst_rstn1_iff in H. *)
-    induction H as [|v w u [H|H] _ IH].
-    + apply rt_refl.
-    + apply rt_trans with w; [apply rt_step|]; now intuition.
-    + specialize (IH Hv); apply clos_rt_rt1n_iff in IH.
-      revert v H; induction IH.
-      - intros v Hx; elim (is_canonical_minimal g x v); assumption.
-      - intros v Hx.
-        assert (Hrw : Level.eq v y).
-        { destruct H as [w ? H']; destruct Hx as [p ? H''].
-          apply UMap.find_1 in H'; apply UMap.find_1 in H''.
-          replace p with w in * by (intuition congruence); clear H''.
-          intuition eauto. }
-        clear - IH Hrw; revert v Hrw.
-        induction IH; intros v Hrw.
-        
-admit.
-  }
-  clear H; rename H' into H.
-
-destruct HR as [x Hrw Hx].
-  rewrite Hrw in *; clear u Hrw; rename x into u.
-  
-Qed.
-*)
-
 (* Reindexes the given universe, using the next available index. *)
 (* let use_index g u =
   let u = repr g u in
@@ -357,7 +295,6 @@ Qed.
   assert (g.index > min_int);
   { g with index = g.index - 1 }
 *)
-
 
 (* [safe_repr] is like [repr] but if the graph doesn't contain the
    searched universe, we add it. *)
