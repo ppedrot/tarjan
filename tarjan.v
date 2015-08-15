@@ -128,13 +128,18 @@ destruct (clos_rst_is_equiv _ (relation_disjunction (ueq_step g) Level.eq)); spl
 + apply equiv_trans.
 Qed.
 
+Instance subrelation_eq : forall g, subrelation Level.eq (eq g).
+Proof.
+intros g u v H; apply rst_step; right; assumption.
+Qed.
+
 End Rel.
 
 Existing Instance Rel.Equivalence_eq.
 
 Record Repr g u n : Prop :=  {
   Repr_wit : Level.t;
-  Repr_rel : clos_refl_trans _ (relation_disjunction (ueq_step g) Level.eq) u Repr_wit;
+  Repr_rel : Rel.eq g u Repr_wit;
   Repr_can : UMap.MapsTo Repr_wit (Canonical n) g
 }.
 
@@ -143,15 +148,20 @@ Proof.
 intros g; eapply proper_sym_impl_iff_2; [now eauto|now eauto|].
 intros u1 u2 Hu n1 n2 Hn Hrw; rewrite <- Hn; clear n2 Hn; rename n1 into n.
 destruct Hrw as [v Hl Hr]; exists v.
-+ clear - Hl Hu; apply clos_rt_rt1n_iff in Hl.
++ clear - Hl Hu; apply clos_rst_rst1n_iff in Hl.
   revert u2 Hu.
-  induction Hl as [|u w v [H|H] Hl IH]; intros u2 Hu.
-  - apply rt_step; right; intuition.
-  - rewrite Hu in H; clear u Hu.
-    eapply rt_trans; [apply rt_step; left; eassumption|].
-    apply IH; trivial.
-  - rewrite H in Hu; clear u H.
-    apply IH; assumption.
+  induction Hl as [|u w v [[H|H]|[H|H]] Hl IH]; intros u2 Hu.
+  - rewrite Hu; reflexivity.
+  - rewrite Hu in *; clear u Hu.
+    transitivity w; [|eapply IH; reflexivity].
+    apply rst_step; left; assumption.
+  - rewrite Hu in *; clear u Hu.
+    apply IH; intuition.
+  - rewrite Hu in *; clear u Hu.
+    transitivity w; [|eapply IH; reflexivity].
+    symmetry; apply rst_step; left; assumption.
+  - rewrite Hu in *; clear u Hu.
+    apply IH; intuition.
 + assumption.
 Qed.
 
