@@ -114,6 +114,24 @@ intros u1 u2 Hu Hrw; destruct Hrw.
 rewrite Hu in *; econstructor; eassumption.
 Qed.
 
+Module Rel.
+
+Definition eq g (u v : Level.t) :=
+  clos_refl_sym_trans _ (relation_disjunction (ueq_step g) Level.eq) u v.
+
+Instance Equivalence_eq : forall g, Equivalence (eq g).
+Proof.
+intros g.
+destruct (clos_rst_is_equiv _ (relation_disjunction (ueq_step g) Level.eq)); split.
++ apply equiv_refl.
++ apply equiv_sym.
++ apply equiv_trans.
+Qed.
+
+End Rel.
+
+Existing Instance Rel.Equivalence_eq.
+
 Record Repr g u n : Prop :=  {
   Repr_wit : Level.t;
   Repr_rel : clos_refl_trans _ (relation_disjunction (ueq_step g) Level.eq) u Repr_wit;
@@ -137,23 +155,6 @@ destruct Hrw as [v Hl Hr]; exists v.
 + assumption.
 Qed.
 
-Module Rel.
-
-Definition eq g (u v : Level.t) :=
-  clos_refl_sym_trans _ (relation_disjunction (ueq_step g) Level.eq) u v.
-
-Instance Equivalence_eq : forall g, Equivalence (eq g).
-Proof.
-intros g.
-destruct (clos_rst_is_equiv _ (relation_disjunction (ueq_step g) Level.eq)); split.
-+ apply equiv_refl.
-+ apply equiv_sym.
-+ apply equiv_trans.
-Qed.
-
-End Rel.
-
-Existing Instance Rel.Equivalence_eq.
 
 Record Universes := {
   ugraph :> universes;
@@ -384,7 +385,14 @@ destruct (Level.eq_dec u v) as [Hrw|Hd].
   { intros Hrw; rewrite <- Hrw in *; clear w Hrw.
     elim rw; eapply g.(ult_complete), ult_step_lt; eauto. }
   apply (g.(unv_topo_rel) v w); try assumption.
-  destruct Hr as [z Hz Hr]; exists z.
+  destruct Hr as [z Hz Hr].
+  assert (Hz' : ~ Level.eq u z).
+  { intros Hrw; clear - Hw' Hz.
+    apply clos_rt_rt1n_iff in Hz.
+    induction Hz.
+    
+  }
+  exists z.
   { apply clos_rt_rt1n_iff in Hz; induction Hz.
     + admit.
     + admit.
