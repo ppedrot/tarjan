@@ -284,33 +284,12 @@ Qed.
 Lemma repr_is_canonical : forall (g : Universes) u,
   UMap.In u g.(entries) -> is_canonical g.(entries) (repr g u).(univ).
 Proof.
-intros g u Hu; unfold repr; revert Hu.
-match goal with [ |- context [Fix _ _ ?F] ] => set (f := F) in * end.
-apply Fix_spec; clear u; intros u a IH Hu.
-unfold f at 1.
-set (p := (match
-           UMap.find u (entries g) as o
-           return
-             (o = UMap.find u (entries g) ->
-              match o with
-              | Some n => UMap.MapsTo u n (entries g)
-              | None => True
-              end)
-         with
-         | Some v =>
-             fun Heqelt : Some v = UMap.find u (entries g) =>
-             UMap.find_2 (eq_sym Heqelt)
-         | None => fun _ : None = UMap.find u (entries g) => I
-         end eq_refl)); clearbody p.
-revert p.
-remember (UMap.find u (entries g)) as elt.
-destruct elt as [[n|v]|]; intros p.
-+ exists n; [reflexivity|].
-  assert (Hrw : Level.eq u (univ n)).
-  { apply ueq_canonical in p; assumption. }
-  rewrite <- Hrw; assumption.
-+ eapply IH, ult_complete, ult_step_eq, p; reflexivity.
-+ apply F.in_find_iff in Hu; congruence.
+intros g u Hu.
+apply repr_spec in Hu; destruct Hu as [v Hu Hv].
+exists (repr g u); [reflexivity|].
+assert (Heq : Level.eq v (repr g u).(univ)).
+{ apply g.(ueq_canonical) in Hv; assumption. }
+rewrite <- Heq; assumption.
 Qed.
 
 Lemma repr_is_In : forall (g : Universes) u,
