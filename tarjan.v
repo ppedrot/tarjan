@@ -244,6 +244,43 @@ destruct a; cbn; apply HF.
 intros y r; apply spec.
 Qed.
 
+Lemma repr_spec : forall (g : Universes) u,
+  UMap.In u g.(entries) -> Repr g.(entries) u (repr g u).
+Proof.
+intros g u Hu.
+unfold repr; revert Hu.
+match goal with [ |- context [Fix _ _ ?F] ] => set (f := F) in * end.
+apply Fix_spec; clear u; intros u a IH Hu.
+unfold f at 1; clearbody f.
+set (p := (match
+           UMap.find u (entries g) as o
+           return
+             (o = UMap.find u (entries g) ->
+              match o with
+              | Some n => UMap.MapsTo u n (entries g)
+              | None => True
+              end)
+         with
+         | Some v =>
+             fun Heqelt : Some v = UMap.find u (entries g) =>
+             UMap.find_2 (eq_sym Heqelt)
+         | None => fun _ : None = UMap.find u (entries g) => I
+         end eq_refl)); clearbody p.
+revert p.
+remember (UMap.find u (entries g)) as elt.
+destruct elt as [[n|v]|]; intros p.
++ exists u; [|assumption].
+  apply rt_step; right; reflexivity.
++ refine (let IH := IH v _ _ in _); [| |clearbody IH].
+  { eapply ult_step_eq; intuition eauto. }
+  { eapply ult_complete, ult_step_eq; intuition eauto. }
+  destruct IH as [w HR Hw].
+  exists w; [|assumption].
+  eapply rt_trans; [|eassumption].
+  apply rt_step; left; econstructor; intuition.
++ apply F.in_find_iff in Hu; intuition.
+Qed.
+
 Lemma repr_is_canonical : forall (g : Universes) u,
   UMap.In u g.(entries) -> is_canonical g.(entries) (repr g u).(univ).
 Proof.
@@ -293,67 +330,6 @@ destruct Hs as [w Hrw Hw].
 destruct Hu as [n Hn Hu].
 apply UMap.find_1 in Hw; apply UMap.find_1 in Hu; congruence.
 Qed.
-
-Lemma repr_spec : forall (g : Universes) u,
-  UMap.In u g.(entries) -> Repr g.(entries) u (repr g u).
-Proof.
-intros g u Hu.
-unfold repr; revert Hu.
-match goal with [ |- context [Fix _ _ ?F] ] => set (f := F) in * end.
-apply Fix_spec; clear u; intros u a IH Hu.
-unfold f at 1; clearbody f.
-set (p := (match
-           UMap.find u (entries g) as o
-           return
-             (o = UMap.find u (entries g) ->
-              match o with
-              | Some n => UMap.MapsTo u n (entries g)
-              | None => True
-              end)
-         with
-         | Some v =>
-             fun Heqelt : Some v = UMap.find u (entries g) =>
-             UMap.find_2 (eq_sym Heqelt)
-         | None => fun _ : None = UMap.find u (entries g) => I
-         end eq_refl)); clearbody p.
-revert p.
-remember (UMap.find u (entries g)) as elt.
-destruct elt as [[n|v]|]; intros p.
-+ exists u; [|assumption].
-  apply rt_step; right; reflexivity.
-+ refine (let IH := IH v _ _ in _); [| |clearbody IH].
-  { eapply ult_step_eq; intuition eauto. }
-  { eapply ult_complete, ult_step_eq; intuition eauto. }
-  
-
-exists (repr g u).(univ).
-+ unfold repr; revert Hu.
-  match goal with [ |- context [Fix _ _ ?F] ] => set (f := F) in * end.
-  apply Fix_spec; clear u; intros u a IH Hu.
-  unfold f at 1; clearbody f.
-  set (p := (match
-             UMap.find u (entries g) as o
-             return
-               (o = UMap.find u (entries g) ->
-                match o with
-                | Some n => UMap.MapsTo u n (entries g)
-                | None => True
-                end)
-           with
-           | Some v =>
-               fun Heqelt : Some v = UMap.find u (entries g) =>
-               UMap.find_2 (eq_sym Heqelt)
-           | None => fun _ : None = UMap.find u (entries g) => I
-           end eq_refl)); clearbody p.
-  revert p.
-  remember (UMap.find u (entries g)) as elt.
-  destruct elt as [[n|v]|]; intros p.
-  - apply rt_step; right; apply g.(ueq_canonical), UMap.find_2; intuition.
-  - apply rt_trans with v; [|eapply IH, g.(ult_complete), ult_step_eq; now eauto].
-    apply rt_step; left; econstructor; eauto.
-  - apply F.in_find_iff in Hu; intuition.
-+ apply repr_is_canonical in Hu.
-  
 
 (* Lemma repr_stable : forall (g : Universes) u,
   UMap.In u g.(entries) -> Rel.eq g u (repr g u).(univ).
