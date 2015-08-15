@@ -28,6 +28,13 @@ Record canonical_node :=
   ilvl: N
 }.
 
+Definition order u v :=
+match (u.(klvl) ?= v.(klvl))%N with
+| Lt => Lt
+| Gt => Gt
+| Eq => (u.(ilvl) ?= v.(ilvl))%N
+end.
+
 Definition big_rank : N := 10000.
 
 (* A Level.t is either an alias for another one, or a canonical one,
@@ -178,10 +185,16 @@ Record Universes := {
     ult_step ugraph.(entries) u v -> UMap.In v ugraph.(entries);
   ueq_canonical : forall u n,
     UMap.MapsTo u (Canonical n) ugraph.(entries) -> Level.eq u n.(univ);
-  unv_gtge_rev : forall u v m n,
-    UMap.MapsTo u (Canonical n) ugraph.(entries) ->
-    UMap.In v n.(ltle) -> Repr ugraph.(entries) v m -> n.(klvl) = m.(klvl) ->
-    exists p, USet.In p.(univ) m.(gtge) /\ Repr ugraph.(entries) u p
+  unv_topo_rel : forall u v m n,
+    UMap.MapsTo u (Canonical m) ugraph.(entries) ->
+    UMap.In v m.(ltle) ->
+    Repr ugraph.(entries) v n -> order m n = Lt
+
+(* ; *)
+(*   unv_gtge_rev : forall u v m n, *)
+(*     UMap.MapsTo u (Canonical n) ugraph.(entries) -> *)
+(*     UMap.In v n.(ltle) -> Repr ugraph.(entries) v m -> n.(klvl) = m.(klvl) -> *)
+(*     exists p, USet.In p.(univ) m.(gtge) /\ Repr ugraph.(entries) u p *)
 }.
 
 Definition tip g u :=
@@ -213,8 +226,6 @@ refine (
   u
 ).
 + eapply ult_step_eq, rw; reflexivity.
-(* + eapply g.(ult_complete); [|exists (Equiv v); eassumption]. *)
-(*   eapply ult_step_eq, rw; reflexivity. *)
 + remember ans as elt; destruct elt as [v|].
   - apply UMap.find_2; symmetry; assumption.
   - trivial.
@@ -408,18 +419,24 @@ apply F.add_mapsto_iff in Hv; destruct Hv as [Hv|Hv].
 Qed.
 
 Next Obligation.
+intros g u ? ? ? ? ? v w m n Hv Hw Hr.
+destruct (Level.eq_dec u v) as [Hrw|Hd].
++ exfalso; rewrite <- Hrw in Hv; clear v Hrw.
+  apply F.add_mapsto_iff in Hv; intuition.
+  replace m with can in * by congruence; clear m.
+  apply F.empty_in_iff in Hw; assumption.
++ apply (g.(unv_topo_rel) v w); try assumption.
+  - eapply UMap.add_3 in Hv; eassumption.
+  - 
+
+Qed.
+
+Next Obligation.
 intros g u ? ? ?.
 remember ans as elt; destruct elt; [apply UMap.find_2; intuition|apply F.not_find_in_iff; intuition].
 Qed.
 
 Check safe_repr.
-
-Definition order u v :=
-match (u.(klvl) ?= v.(klvl))%N with
-| Lt => Lt
-| Gt => Gt
-| Eq => (u.(ilvl) ?= v.(ilvl))%N
-end.
 
 Definition clean_ltle (g : Universes) (ltle : UMap.t bool)
   (m : forall u, UMap.In u ltle -> UMap.In u g.(entries)) : UMap.t bool * bool.
@@ -656,25 +673,26 @@ Fix N.lt_wf_0 (fun count => btT (N.succ count) -> _ -> _ -> btT count + Universe
 + apply N.lt_succ_diag_r.
 Qed.
 
-let rec backward_traverse to_revert b_traversed count g x =
-  let x = repr g x in
-  let count = count - 1 in
-  if count < 0 then begin
-    revert_graph to_revert g;
-    raise (AbortBackward g)
-  end;
-  if x.status = NoMark then begin
-    x.status <- Visited;
-    let to_revert = x.univ::to_revert in
-    let gtge, x, g = get_gtge g x in
-    let to_revert, b_traversed, count, g =
-      LSet.fold (fun y (to_revert, b_traversed, count, g) ->
-        backward_traverse to_revert b_traversed count g y)
-        gtge (to_revert, b_traversed, count, g)
+let rec forward_traverse f_traversed g v_klvl x y =
+  let y = repr g y in
+  if y.klvl < v_klvl then begin
+    let y = { y with klvl = v_klvl;
+                      gtge = if x == y then LSet.empty
+                            else LSet.singleton x.univ }
     in
-    to_revert, x.univ::b_traversed, count, g
-  end
-  else to_revert, b_traversed, count, g
+    let g = change_node g y in
+    let ltle, y, g = get_ltle g y in
+    let f_traversed, g =
+      LMap.fold (fun z _ (f_traversed, g) ->
+        forward_traverse f_traversed g v_klvl y z)
+      ltle (f_traversed, g)
+    in
+    y.univ::f_traversed, g
+    end else if y.klvl = v_klvl && x != y then
+      let g = change_node g
+        { y with gtge = LSet.add x.univ y.gtge } in
+      f_traversed, g
+    else f_traversed, g
 
 End Univ.
 
