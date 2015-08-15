@@ -294,6 +294,11 @@ destruct Hu as [n Hn Hu].
 apply UMap.find_1 in Hw; apply UMap.find_1 in Hu; congruence.
 Qed.
 
+Lemma repr_spec : forall (g : Universes) u,
+  UMap.In u g.(entries) -> Repr g.(entries) u (repr g u).
+Proof.
+intros g u.
+
 (* Lemma repr_stable : forall (g : Universes) u,
   UMap.In u g.(entries) -> Rel.eq g u (repr g u).(univ).
 Proof.
