@@ -135,6 +135,26 @@ Qed.
 
 End Rel.
 
+Lemma eq_alt_iff : forall g u v,
+  Rel.eq g u v <-> (Level.eq u v \/ clos_refl_sym_trans _ (ueq_step g) u v).
+Proof.
+intros g u v; split; intros Hr.
++ apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [H|H] Hr [IH|IH]].
+  - left; reflexivity.
+  - destruct H; rewrite IH in H; [right; apply rst_step|left]; intuition.
+  - destruct H.
+    { right; eapply rst_trans; [|eassumption].
+      apply rst_step; intuition. }
+    { right.
+
++ destruct Hr as [Hr|Hr].
+  - rewrite Hr; reflexivity.
+  - apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [H|H] Hr IH].
+    { reflexivity. }
+    { transitivity v; [|assumption]; apply rst_step; left; assumption. }
+    { transitivity v; [|assumption]; symmetry; apply rst_step; left; assumption. }
+Qed.
+
 Existing Instance Rel.Equivalence_eq.
 
 Record Repr g u n : Prop :=  {
@@ -185,6 +205,52 @@ Record Universes := {
 (*     exists p, USet.In p.(univ) m.(gtge) /\ Repr ugraph.(entries) u p *)
 }.
 
+(*
+Lemma deterministic_clos_trans_1n :
+  forall A (R eq : relation A) x y z,
+  Equivalence eq ->
+  Proper (eq ==> eq ==> iff) R ->
+  Proper (R ==> R ==> Basics.impl) eq ->
+  clos_trans _ R x z -> R x y -> eq y z \/ clos_trans _ R y z.
+Proof.
+intros A R eq x y z Heq Hp Hdet Hct Hr.
+apply clos_trans_tn1_iff in Hct.
+revert y Hr; induction Hct as [z Hr|z y Hr Hct IH]; intros a Ha.
++ left.
+  eapply Hdet; try eassumption; reflexivity.
++ specialize (IH a Ha); destruct IH as [IH|IH].
+  - rewrite <- IH in Hr.
+    right; apply t_step; assumption.
+  - right; eapply t_trans; [eassumption|].
+    apply t_step; eassumption.
+Qed.
+
+Instance deterministic_ueq_r : forall g,
+  Proper (ueq_step g ==> ueq_step g ==> Basics.impl) Level.eq.
+Proof.
+intros g u1 u2 Hu v1 v2 Hv Hrw.
+rewrite <- Hrw in *; clear v1 Hrw; rename v2 into v.
+destruct Hu as [w1 Hw1 Hu], Hv as [w2 Hw2 Hv].
+rewrite Hw1 in *; rewrite Hw2 in *; clear u2 v Hw1 Hw2.
+apply UMap.find_1 in Hu.
+apply UMap.find_1 in Hv.
+replace w1 with w2 by congruence; reflexivity.
+Qed.
+
+Instance deterministic_ueq_l : forall g,
+  Proper (Basics.flip (ueq_step g) ==> Basics.flip (ueq_step g) ==> Basics.impl) Level.eq.
+Proof.
+intros g u1 u2 Hu v1 v2 Hv Hrw.
+rewrite <- Hrw in *; clear v1 Hrw; rename v2 into v.
+destruct Hu as [w1 Hw1 Hu], Hv as [w2 Hw2 Hv].
+rewrite Hw1 in *; clear u1 Hw1.
+
+apply UMap.find_1 in Hu.
+apply UMap.find_1 in Hv.
+replace w1 with w2 by congruence; reflexivity.
+Qed.
+
+
 Inductive trichotomy {A} (eq lt : relation A) (x y : A) : Prop :=
 | trichotomy_eq : eq x y -> trichotomy eq lt x y
 | trichotomy_lt : lt x y -> trichotomy eq lt x y
@@ -194,20 +260,31 @@ Lemma ueq_step_trichotomy : forall (g : Universes) u v,
   Rel.eq g.(entries) u v -> trichotomy Level.eq (clos_trans _ (ueq_step g.(entries))) u v.
 Proof.
 intros g u v Hr.
-apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [H|H] Hr IH].
+apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [[H|H]|[H|H]] Hr IH].
 + apply trichotomy_eq; reflexivity.
-+ 
++ destruct IH as [Hrw|Hlt|Hgt].
+  - apply trichotomy_lt, t_step; rewrite <- Hrw; assumption.
+  - apply trichotomy_lt; eapply t_trans; [|eassumption]; eapply t_step; assumption.
+  -
 
+*)
 
 Lemma is_canonical_rt : forall (g : Universes) u v,
   Rel.eq g.(entries) u v -> is_canonical g.(entries) v ->
-  clos_trans _ (relation_disjunction (ueq_step g.(entries)) Level.eq) u v.
+  Level.eq u v \/ clos_trans _ (ueq_step g.(entries)) u v.
 Proof.
 intros g u v Hr Hv.
 apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [H|H] Hr IH].
-+ apply t_step; right; reflexivity.
-+ specialize (IH Hv); destruct H as [H|H].
-  - eapply t_trans; [|eassumption].
++ left; reflexivity.
++ specialize (IH Hv).
+  destruct IH as [IH|IH].
+  - destruct H as [H|H]; rewrite IH in H; [|intuition].
+    right; apply t_step; assumption.
+  -
+
+ destruct H as [H|H].
+  - destruct IH as [IH|IH].
+right; eapply t_trans; [|eassumption].
     apply t_step; left; assumption.
   - eapply t_trans; [|eassumption].
     apply t_step; right; assumption.
