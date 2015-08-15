@@ -382,9 +382,7 @@ destruct (Level.eq_dec u v) as [Hrw|Hd].
   { eapply UMap.add_3 in Hv; eassumption. }
   assert (Hw' : ~ Level.eq u w).
   { intros Hrw; rewrite <- Hrw in *; clear w Hrw.
-    
-  }
-
+    elim rw; eapply g.(ult_complete), ult_step_lt; eauto. }
   apply (g.(unv_topo_rel) v w); try assumption.
   destruct Hr as [z Hz Hr]; exists z.
   { apply clos_rt_rt1n_iff in Hz; induction Hz.
