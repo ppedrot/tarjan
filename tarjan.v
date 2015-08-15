@@ -165,7 +165,6 @@ destruct Hrw as [v Hl Hr]; exists v.
 + assumption.
 Qed.
 
-
 Record Universes := {
   ugraph :> universes;
   ult_trans_wf :
@@ -185,6 +184,47 @@ Record Universes := {
 (*     UMap.In v n.(ltle) -> Repr ugraph.(entries) v m -> n.(klvl) = m.(klvl) -> *)
 (*     exists p, USet.In p.(univ) m.(gtge) /\ Repr ugraph.(entries) u p *)
 }.
+
+Inductive trichotomy {A} (eq lt : relation A) (x y : A) : Prop :=
+| trichotomy_eq : eq x y -> trichotomy eq lt x y
+| trichotomy_lt : lt x y -> trichotomy eq lt x y
+| trichotomy_gt : lt y x -> trichotomy eq lt x y.
+
+Lemma ueq_step_trichotomy : forall (g : Universes) u v,
+  Rel.eq g.(entries) u v -> trichotomy Level.eq (clos_trans _ (ueq_step g.(entries))) u v.
+Proof.
+intros g u v Hr.
+apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [H|H] Hr IH].
++ apply trichotomy_eq; reflexivity.
++ 
+
+
+Lemma is_canonical_rt : forall (g : Universes) u v,
+  Rel.eq g.(entries) u v -> is_canonical g.(entries) v ->
+  clos_trans _ (relation_disjunction (ueq_step g.(entries)) Level.eq) u v.
+Proof.
+intros g u v Hr Hv.
+apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [H|H] Hr IH].
++ apply t_step; right; reflexivity.
++ specialize (IH Hv); destruct H as [H|H].
+  - eapply t_trans; [|eassumption].
+    apply t_step; left; assumption.
+  - eapply t_trans; [|eassumption].
+    apply t_step; right; assumption.
++ specialize (IH Hv); destruct H as [H|H].
+  - apply clos_trans_t1n_iff in IH; destruct IH.
+    { }
+  - eapply t_trans; [|eassumption].
+    apply t_step; right; symmetry; assumption.
+Qed.
+
+
+induction Hr.
+ as [|u w v [[H|H]|[H|H]] Hr IH]; intros u2 Hu.
+
+Lemma Repr_fun : forall (g : Universes) u n1 n2,
+  Repr g.(entries) u n1 -> Repr g.(entries) u n2 -> n1 = n2.
+Proof.
 
 Definition tip g u :=
   {| univ := u;
