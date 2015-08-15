@@ -380,6 +380,11 @@ destruct (Level.eq_dec u v) as [Hrw|Hd].
   apply F.empty_in_iff in Hw; assumption.
 + assert (Hv' : UMap.MapsTo v (Canonical m) (entries g)).
   { eapply UMap.add_3 in Hv; eassumption. }
+  assert (Hw' : ~ Level.eq u w).
+  { intros Hrw; rewrite <- Hrw in *; clear w Hrw.
+    
+  }
+
   apply (g.(unv_topo_rel) v w); try assumption.
   destruct Hr as [z Hz Hr]; exists z.
   { apply clos_rt_rt1n_iff in Hz; induction Hz.
