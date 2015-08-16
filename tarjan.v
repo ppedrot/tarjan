@@ -536,9 +536,17 @@ destruct (Level.eq_dec u v) as [Hrw|Hd].
   { intros Hrw; rewrite <- Hrw in *; clear w Hrw.
     elim rw; eapply g.(ult_complete), ult_step_lt; eauto. }
   apply (g.(unv_topo_rel) v w); try assumption.
-  destruct Hr as [z Hz Hr].
+  destruct Hr as [z Hz Hr]; apply eq_alt_iff in Hz.
   assert (Hc : ~ Level.eq u z).
-  { intros Hrw; rewrite Hrw in rw; elim rw.
+  { intros Hrw; rewrite Hrw in rw.
+    apply F.add_mapsto_iff in Hr; destruct Hr as [Hr|Hr]; [|now intuition].
+    replace n with can in * by intuition congruence.
+    destruct Hz as [Hz|Hz]; [rewrite <- Hrw in Hz; now intuition|].
+    clear - Hz Hw' Hrw.
+
+  destruct Hz as [Hz|Hz].
+  - rewrite Hz; exists z; eauto.
+  assert (Hc : ~ Level.eq u z).
   exists z; [|].
 
 Qed.
