@@ -155,7 +155,9 @@ intros g u v; split; intros Hr.
   - destruct H.
     { rewrite IH in H; right; apply rst_sym, rst_step; assumption. }
     { left; rewrite <- H, IH; reflexivity. }
-  -
+  - destruct H.
+    { right; eapply rst_trans; [|eassumption]; eapply rst_sym, rst_step, H. }
+    { 
 
 
 + destruct Hr as [Hr|Hr].
