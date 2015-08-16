@@ -415,10 +415,10 @@ destruct elt as [[n|v]|]; intros p.
 + apply F.in_find_iff in Hu; intuition.
 Qed.
 
-Lemma Repr_fun : forall (g : Universes) u n1 n2,
+(* Lemma Repr_fun : forall (g : Universes) u n1 n2,
   Repr g.(entries) u n1 -> Repr g.(entries) u n2 -> n1 = n2.
 Proof.
-
+ *)
 
 Lemma repr_is_canonical : forall (g : Universes) u,
   UMap.In u g.(entries) -> is_canonical g.(entries) (repr g u).(univ).
@@ -530,25 +530,16 @@ destruct (Level.eq_dec u v) as [Hrw|Hd].
   apply F.add_mapsto_iff in Hv; intuition.
   replace m with can in * by congruence; clear m.
   apply F.empty_in_iff in Hw; assumption.
-+ assert (Hv' : UMap.MapsTo v (Canonical m) (entries g)).
++ assert (Hv' : UMap.MapsTo v (Canonical m) (entries g)); [|clear Hv].
   { eapply UMap.add_3 in Hv; eassumption. }
   assert (Hw' : ~ Level.eq u w).
   { intros Hrw; rewrite <- Hrw in *; clear w Hrw.
     elim rw; eapply g.(ult_complete), ult_step_lt; eauto. }
   apply (g.(unv_topo_rel) v w); try assumption.
   destruct Hr as [z Hz Hr].
-  assert (Hz' : ~ Level.eq u z).
-  { intros Hrw; clear - Hw' Hz.
-    apply clos_rt_rt1n_iff in Hz.
-    induction Hz.
-    
-  }
-  exists z.
-  { apply clos_rt_rt1n_iff in Hz; induction Hz.
-    + admit.
-    + admit.
-  }
-  eapply UMap.add_3.
+  assert (Hc : ~ Level.eq u z).
+  { intros Hrw; rewrite Hrw in rw; elim rw.
+  exists z; [|].
 
 Qed.
 
