@@ -114,6 +114,20 @@ intros u1 u2 Hu Hrw; destruct Hrw.
 rewrite Hu in *; econstructor; eassumption.
 Qed.
 
+Instance Proper_clos_trans : forall A (R eq : relation A),
+  Equivalence eq ->
+  Proper (eq ==> eq ==> iff) R ->
+  Proper (eq ==> eq ==> iff) (clos_trans _ R).
+Proof.
+intros A R eq Heq HR.
+eapply proper_sym_impl_iff_2; [now eauto|now eauto|].
+intros x1 x2 Hx y1 y2 Hy Hr.
+revert x2 Hx y2 Hy; induction Hr; intros x2 Hx y2 Hy.
++ apply t_step; compute in Hx.
+  rewrite <- Hx, <- Hy; assumption.
++ eapply t_trans; [eapply IHHr1|eapply IHHr2]; (eassumption || reflexivity).
+Qed.
+
 Module Rel.
 
 Definition eq g (u v : Level.t) :=
@@ -306,23 +320,16 @@ apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [H|H] _ IH].
   - right; eapply t_trans; [eapply t_step|]; eassumption.
 + specialize (IH Hv); destruct IH as [IH|IH].
   - rewrite IH in H; elim is_canonical_minimal with g.(entries) w u; assumption.
-  - apply clos_trans_tn1_iff in IH.
-    revert u H; induction IH as [u H|u z H _ IH]; intros w Hw.
+  - apply clos_trans_t1n_iff in IH; destruct IH as [w Hw|w z Hw IH].
     { left; destruct H as [? Hrw1 H], Hw as [? Hrw2 Hw].
       apply UMap.find_1 in H; apply UMap.find_1 in Hw.
       replace w0 with w1 in * by congruence.
       rewrite Hrw1, Hrw2; reflexivity. }
-    { specialize (IH w Hw); destruct IH as [IH|IH].
-      + rewrite <- IH in H; right; apply t_step, H.
-      + exfalso.
-Search
-    }
-
+    { right; destruct H as [? Hrw1 H], Hw as [? Hrw2 Hw].
+      apply UMap.find_1 in H; apply UMap.find_1 in Hw.
+      replace w0 with w1 in * by congruence.
+      rewrite Hrw1, <- Hrw2; apply clos_trans_t1n_iff; assumption. }
 Qed.
-
-
-induction Hr.
- as [|u w v [[H|H]|[H|H]] Hr IH]; intros u2 Hu.
 
 Lemma Repr_fun : forall (g : Universes) u n1 n2,
   Repr g.(entries) u n1 -> Repr g.(entries) u n2 -> n1 = n2.
