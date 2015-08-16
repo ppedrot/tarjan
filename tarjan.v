@@ -298,7 +298,7 @@ Lemma is_canonical_rt : forall (g : Universes) u v,
 Proof.
 intros g u v Hr Hv.
 apply eq_alt_iff in Hr; destruct Hr as [Hr|Hr]; [intuition|].
-apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [H|H] Hr IH].
+apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [H|H] _ IH].
 + left; reflexivity.
 + specialize (IH Hv).
   destruct IH as [IH|IH].
@@ -306,7 +306,17 @@ apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [H|H] Hr IH].
   - right; eapply t_trans; [eapply t_step|]; eassumption.
 + specialize (IH Hv); destruct IH as [IH|IH].
   - rewrite IH in H; elim is_canonical_minimal with g.(entries) w u; assumption.
-  -
+  - apply clos_trans_tn1_iff in IH.
+    revert u H; induction IH as [u H|u z H _ IH]; intros w Hw.
+    { left; destruct H as [? Hrw1 H], Hw as [? Hrw2 Hw].
+      apply UMap.find_1 in H; apply UMap.find_1 in Hw.
+      replace w0 with w1 in * by congruence.
+      rewrite Hrw1, Hrw2; reflexivity. }
+    { specialize (IH w Hw); destruct IH as [IH|IH].
+      + rewrite <- IH in H; right; apply t_step, H.
+      + exfalso.
+Search
+    }
 
 Qed.
 
