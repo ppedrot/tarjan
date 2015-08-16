@@ -294,19 +294,10 @@ apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [H|H] Hr IH].
 + specialize (IH Hv).
   destruct IH as [IH|IH].
   - rewrite IH in H; right; apply t_step; assumption.
-  -
+  - right; eapply t_trans; [eapply t_step|]; eassumption.
++ specialize (IH Hv).
+  apply clos_trans_t1n_iff in IH; destruct IH.
 
- destruct H as [H|H].
-  - destruct IH as [IH|IH].
-right; eapply t_trans; [|eassumption].
-    apply t_step; left; assumption.
-  - eapply t_trans; [|eassumption].
-    apply t_step; right; assumption.
-+ specialize (IH Hv); destruct H as [H|H].
-  - apply clos_trans_t1n_iff in IH; destruct IH.
-    { }
-  - eapply t_trans; [|eassumption].
-    apply t_step; right; symmetry; assumption.
 Qed.
 
 
