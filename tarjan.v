@@ -288,6 +288,7 @@ Lemma is_canonical_rt : forall (g : Universes) u v,
   Level.eq u v \/ clos_trans _ (ueq_step g.(entries)) u v.
 Proof.
 intros g u v Hr Hv.
+apply eq_alt_iff in Hr; destruct Hr as [Hr|Hr]; [intuition|].
 apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [H|H] Hr IH].
 + left; reflexivity.
 + specialize (IH Hv).
