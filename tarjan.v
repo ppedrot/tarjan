@@ -283,6 +283,15 @@ apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [[H|H]|[H|H]] Hr IH].
 
 *)
 
+Lemma is_canonical_minimal : forall g u v,
+  is_canonical g u -> ~ ueq_step g u v.
+Proof.
+intros g u v Hu Hs.
+destruct Hs as [w Hrw Hw].
+destruct Hu as [n Hn Hu].
+apply UMap.find_1 in Hw; apply UMap.find_1 in Hu; congruence.
+Qed.
+
 Lemma is_canonical_rt : forall (g : Universes) u v,
   Rel.eq g.(entries) u v -> is_canonical g.(entries) v ->
   Level.eq u v \/ clos_trans _ (ueq_step g.(entries)) u v.
@@ -295,8 +304,9 @@ apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [H|H] Hr IH].
   destruct IH as [IH|IH].
   - rewrite IH in H; right; apply t_step; assumption.
   - right; eapply t_trans; [eapply t_step|]; eassumption.
-+ specialize (IH Hv).
-  apply clos_trans_t1n_iff in IH; destruct IH.
++ specialize (IH Hv); destruct IH as [IH|IH].
+  - rewrite IH in H; elim is_canonical_minimal with g.(entries) w u; assumption.
+  -
 
 Qed.
 
@@ -410,15 +420,6 @@ intros g u Hu.
 assert (is_canonical g.(entries) (repr g u).(univ)) by apply repr_is_canonical, Hu.
 destruct H as [n Hn H].
 exists (Canonical n); assumption.
-Qed.
-
-Lemma is_canonical_minimal : forall g u v,
-  is_canonical g u -> ~ ueq_step g u v.
-Proof.
-intros g u v Hu Hs.
-destruct Hs as [w Hrw Hw].
-destruct Hu as [n Hn Hu].
-apply UMap.find_1 in Hw; apply UMap.find_1 in Hu; congruence.
 Qed.
 
 (* Reindexes the given universe, using the next available index. *)
