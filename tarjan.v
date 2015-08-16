@@ -135,6 +135,8 @@ Qed.
 
 End Rel.
 
+Existing Instance Rel.Equivalence_eq.
+
 Lemma eq_alt_iff : forall g u v,
   Rel.eq g u v <-> (Level.eq u v \/ clos_refl_sym_trans _ (ueq_step g) u v).
 Proof.
@@ -172,8 +174,6 @@ intros g u v; split; intros Hr.
     { transitivity v; [|assumption]; symmetry; apply rst_step; left; assumption. }
 Qed.
 
-Existing Instance Rel.Equivalence_eq.
-
 Record Repr g u n : Prop :=  {
   Repr_wit : Level.t;
   Repr_rel : Rel.eq g u Repr_wit;
@@ -185,20 +185,17 @@ Proof.
 intros g; eapply proper_sym_impl_iff_2; [now eauto|now eauto|].
 intros u1 u2 Hu n1 n2 Hn Hrw; rewrite <- Hn; clear n2 Hn; rename n1 into n.
 destruct Hrw as [v Hl Hr]; exists v.
-+ clear - Hl Hu; apply clos_rst_rst1n_iff in Hl.
-  revert u2 Hu.
-  induction Hl as [|u w v [[H|H]|[H|H]] Hl IH]; intros u2 Hu.
++ clear - Hl Hu; apply eq_alt_iff in Hl.
+  destruct Hl as [Hl|Hl]; [rewrite <- Hu, Hl; reflexivity|].
+  apply clos_rst_rst1n_iff in Hl; revert u2 Hu.
+  induction Hl as [|u w v [H|H] Hl IH]; intros u2 Hu.
   - rewrite Hu; reflexivity.
   - rewrite Hu in *; clear u Hu.
     transitivity w; [|eapply IH; reflexivity].
     apply rst_step; left; assumption.
   - rewrite Hu in *; clear u Hu.
-    apply IH; intuition.
-  - rewrite Hu in *; clear u Hu.
     transitivity w; [|eapply IH; reflexivity].
     symmetry; apply rst_step; left; assumption.
-  - rewrite Hu in *; clear u Hu.
-    apply IH; intuition.
 + assumption.
 Qed.
 
