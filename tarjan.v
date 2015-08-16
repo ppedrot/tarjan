@@ -157,9 +157,13 @@ intros g u v; split; intros Hr.
     { left; rewrite <- H, IH; reflexivity. }
   - destruct H.
     { right; eapply rst_trans; [|eassumption]; eapply rst_sym, rst_step, H. }
-    { 
-
-
+    { apply clos_rst_rst1n_iff in IH; clear - IH H; symmetry in H.
+      revert u H; induction IH as [|v w z Hr _ IH]; [intuition|intros u H; right].
+      rewrite <- H in Hr; clear v H.
+      specialize (IH w); destruct IH; [reflexivity| |].
+      + rewrite H in Hr; clear H; apply clos_rst_rst1n_iff; eright; [eauto|apply rst1n_refl].
+      + apply clos_rst_rst1n_iff; eright; [|apply clos_rst_rst1n_iff]; eassumption.
+    }
 + destruct Hr as [Hr|Hr].
   - rewrite Hr; reflexivity.
   - apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [H|H] Hr IH].
