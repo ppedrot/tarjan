@@ -331,10 +331,6 @@ apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [H|H] _ IH].
       rewrite Hrw1, <- Hrw2; apply clos_trans_t1n_iff; assumption. }
 Qed.
 
-Lemma Repr_fun : forall (g : Universes) u n1 n2,
-  Repr g.(entries) u n1 -> Repr g.(entries) u n2 -> n1 = n2.
-Proof.
-
 Definition tip g u :=
   {| univ := u;
     ltle := UMap.empty bool;
@@ -408,16 +404,21 @@ revert p.
 remember (UMap.find u (entries g)) as elt.
 destruct elt as [[n|v]|]; intros p.
 + exists u; [|assumption].
-  apply rt_step; right; reflexivity.
+  reflexivity.
 + refine (let IH := IH v _ _ in _); [| |clearbody IH].
   { eapply ult_step_eq; intuition eauto. }
   { eapply ult_complete, ult_step_eq; intuition eauto. }
   destruct IH as [w HR Hw].
   exists w; [|assumption].
-  eapply rt_trans; [|eassumption].
-  apply rt_step; left; econstructor; intuition.
+  transitivity v; [|assumption].
+  apply rst_step; left; econstructor; intuition.
 + apply F.in_find_iff in Hu; intuition.
 Qed.
+
+Lemma Repr_fun : forall (g : Universes) u n1 n2,
+  Repr g.(entries) u n1 -> Repr g.(entries) u n2 -> n1 = n2.
+Proof.
+
 
 Lemma repr_is_canonical : forall (g : Universes) u,
   UMap.In u g.(entries) -> is_canonical g.(entries) (repr g u).(univ).
