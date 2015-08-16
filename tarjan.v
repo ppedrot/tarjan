@@ -293,8 +293,7 @@ apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [H|H] Hr IH].
 + left; reflexivity.
 + specialize (IH Hv).
   destruct IH as [IH|IH].
-  - destruct H as [H|H]; rewrite IH in H; [|intuition].
-    right; apply t_step; assumption.
+  - rewrite IH in H; right; apply t_step; assumption.
   -
 
  destruct H as [H|H].
