@@ -690,6 +690,7 @@ refine (
 + admit.
 + admit.
 + admit.
++ admit.
 Qed.
 
 Set Implicit Arguments.
@@ -788,6 +789,11 @@ Fix N.lt_wf_0 (fun count => btT (N.succ count) -> _ -> _ -> btT count + Universe
 + apply N.lt_pred_l; congruence.
 + apply N.lt_succ_diag_r.
 Qed.
+
+End Univ.
+
+Extract Inductive prod => "(*)"  [ "(,)" ].
+Extraction Univ.
 
 let rec forward_traverse f_traversed g v_klvl x y =
   let y = repr g y in
