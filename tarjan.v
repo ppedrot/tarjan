@@ -793,6 +793,9 @@ Fix N.lt_wf_0 (fun count => btT (N.succ count) -> _ -> _ -> btT count + Universe
 + apply N.lt_succ_diag_r.
 Qed.
 
+Definition forward_traverse (g : Universes) (lvl : N) (n : canonical_node) (u : Level.t) : unit.
+Proof.
+
 let rec forward_traverse f_traversed g v_klvl x y =
   let y = repr g y in
   if y.klvl < v_klvl then begin
