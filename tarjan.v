@@ -632,7 +632,7 @@ Defined.
 Program Definition get_ltle (g : Universes) (n : canonical_node)
   (m : forall u, UMap.In u n.(ltle) -> UMap.In u g.(entries)) :
   UMap.t bool * canonical_node * Universes :=
-let (ans, chg) := clean_ltle g n.(ltle) m in
+let '(ans, chg) := clean_ltle g n.(ltle) m in
 if chg then
   let sz := N.of_nat (UMap.cardinal n.(Univ.ltle)) in
   let sz2 := N.of_nat (UMap.cardinal ans) in
