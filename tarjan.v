@@ -559,16 +559,12 @@ Qed.
 Check safe_repr.
 
 Definition clean_ltle (g : Universes) (ltle : UMap.t bool)
-  (m : forall u, UMap.In u ltle -> UMap.In u g.(entries)) : UMap.t bool * bool.
-Proof.
-refine (
-  let fold u strict accu :=
-    let v := (repr g u).(univ) in
-    (UMap.add v strict (fst accu), if Level.eq_dec u v then snd accu else true)
-  in
-  UMap.fold fold ltle (UMap.empty bool, false)
-).
-Defined.
+  (m : forall u, UMap.In u ltle -> UMap.In u g.(entries)) : UMap.t bool * bool :=
+let fold u strict accu :=
+  let v := (repr g u).(univ) in
+  (UMap.add v strict (fst accu), if Level.eq_dec u v then snd accu else true)
+in
+UMap.fold fold ltle (UMap.empty bool, false).
 
 Lemma clean_ltle_identity : forall (g : Universes) ltle
   (m : forall u, UMap.In u ltle -> UMap.In u g.(entries)),
@@ -633,39 +629,39 @@ refine (
 ).
 Defined.
 
-Definition get_ltle (g : Universes) (n : canonical_node)
+Program Definition get_ltle (g : Universes) (n : canonical_node)
   (m : forall u, UMap.In u n.(ltle) -> UMap.In u g.(entries)) :
-  UMap.t bool * canonical_node * Universes.
-Proof.
-refine (
-  let cleaned := clean_ltle g n.(ltle) m in
-  if snd cleaned then
-    let sz := N.of_nat (UMap.cardinal n.(Univ.ltle)) in
-    let sz2 := N.of_nat (UMap.cardinal (fst cleaned)) in
-    let n := {|
-      univ := n.(univ);
-      Univ.ltle := fst cleaned;
-      gtge := n.(gtge);
-      rank := n.(rank);
-      klvl := n.(klvl);
-      ilvl := n.(ilvl)
-    |} in
-    let g := {|
-      entries := UMap.add n.(univ) (Canonical n) g.(entries);
-      index := g.(index);
-      n_nodes := g.(n_nodes);
-      n_edges := (g.(n_edges) + sz2) - sz
-    |} in
-    (fst cleaned, n, {| ugraph := g |})
-  else (n.(Univ.ltle), n, g)
-).
-+ intros u.
-  assert (Hwf := g0.(ult_trans_wf) u).
-  induction Hwf as [u Hu IH].
-  admit.
-+ admit.
-+ admit.
-Qed.
+  UMap.t bool * canonical_node * Universes :=
+let cleaned := clean_ltle g n.(ltle) m in
+if snd cleaned then
+  let sz := N.of_nat (UMap.cardinal n.(Univ.ltle)) in
+  let sz2 := N.of_nat (UMap.cardinal (fst cleaned)) in
+  let n := {|
+    univ := n.(univ);
+    Univ.ltle := fst cleaned;
+    gtge := n.(gtge);
+    rank := n.(rank);
+    klvl := n.(klvl);
+    ilvl := n.(ilvl)
+  |} in
+  let g := {|
+    entries := UMap.add n.(univ) (Canonical n) g.(entries);
+    index := g.(index);
+    n_nodes := g.(n_nodes);
+    n_edges := (g.(n_edges) + sz2) - sz
+  |} in
+  (fst cleaned, n, {| ugraph := g |})
+else (n.(Univ.ltle), n, g).
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+
+Check get_ltle.
 
 Definition get_gtge (g : Universes) (n : canonical_node)
   (m : forall u, USet.In u n.(gtge) -> UMap.In u g.(entries)) :
