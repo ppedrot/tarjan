@@ -793,12 +793,6 @@ Fix N.lt_wf_0 (fun count => btT (N.succ count) -> _ -> _ -> btT count + Universe
 + apply N.lt_succ_diag_r.
 Qed.
 
-End Univ.
-
-Extract Inductive bool => "bool" [ "true" "false" ].
-Extract Inductive prod => "(*)"  [ "(,)" ].
-Extraction Univ.
-
 let rec forward_traverse f_traversed g v_klvl x y =
   let y = repr g y in
   if y.klvl < v_klvl then begin
@@ -819,6 +813,12 @@ let rec forward_traverse f_traversed g v_klvl x y =
         { y with gtge = LSet.add x.univ y.gtge } in
       f_traversed, g
     else f_traversed, g
+
+End Univ.
+
+Extract Inductive bool => "bool" [ "true" "false" ].
+Extract Inductive prod => "(*)"  [ "(,)" ].
+Extraction Univ.
 
 End Univ.
 
