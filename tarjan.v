@@ -632,13 +632,13 @@ Defined.
 Program Definition get_ltle (g : Universes) (n : canonical_node)
   (m : forall u, UMap.In u n.(ltle) -> UMap.In u g.(entries)) :
   UMap.t bool * canonical_node * Universes :=
-let cleaned := clean_ltle g n.(ltle) m in
-if snd cleaned then
+let (ans, chg) := clean_ltle g n.(ltle) m in
+if chg then
   let sz := N.of_nat (UMap.cardinal n.(Univ.ltle)) in
-  let sz2 := N.of_nat (UMap.cardinal (fst cleaned)) in
+  let sz2 := N.of_nat (UMap.cardinal ans) in
   let n := {|
     univ := n.(univ);
-    Univ.ltle := fst cleaned;
+    Univ.ltle := ans;
     gtge := n.(gtge);
     rank := n.(rank);
     klvl := n.(klvl);
@@ -650,7 +650,7 @@ if snd cleaned then
     n_nodes := g.(n_nodes);
     n_edges := (g.(n_edges) + sz2) - sz
   |} in
-  (fst cleaned, n, {| ugraph := g |})
+  (ans, n, {| ugraph := g |})
 else (n.(Univ.ltle), n, g).
 Next Obligation.
 Admitted.
@@ -792,6 +792,7 @@ Qed.
 
 End Univ.
 
+Extract Inductive bool => "bool" [ "true" "false" ].
 Extract Inductive prod => "(*)"  [ "(,)" ].
 Extraction Univ.
 
