@@ -331,6 +331,8 @@ apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [H|H] _ IH].
       rewrite Hrw1, <- Hrw2; apply clos_trans_t1n_iff; assumption. }
 Qed.
 
+Print Transparent Dependencies is_canonical_rt.
+
 Definition tip g u :=
   {| univ := u;
     ltle := UMap.empty bool;
@@ -543,13 +545,11 @@ destruct (Level.eq_dec u v) as [Hrw|Hd].
     replace n with can in * by intuition congruence.
     destruct Hz as [Hz|Hz]; [rewrite <- Hrw in Hz; now intuition|].
     clear - Hz Hw' Hrw.
+    apply clos_rst_rst1n_iff in Hz; induction Hz; [now intuition|].
+    
 
   destruct Hz as [Hz|Hz].
-  - rewrite Hz; exists z; eauto.
-  assert (Hc : ~ Level.eq u z).
-  exists z; [|].
-
-Qed.
+Admitted.
 
 Next Obligation.
 intros g u ? ? ?.
