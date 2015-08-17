@@ -567,8 +567,8 @@ in
 UMap.fold fold ltle (UMap.empty bool, false).
 
 Record clean_ltle_Spec g (m1 m2 : UMap.t bool) (chg : bool) : Prop := {
-  cltle_l : forall u b, UMap.MapsTo u m1 b -> exists v, UMap.MapsTo v m2 b /\ Rel.eq g u v;
-  cltle_r : forall u b, UMap.MapsTo u m2 b -> exists v, UMap.MapsTo v m1 b /\ Rel.eq g u v;
+  cltle_l : forall u b, UMap.MapsTo u b m1 -> exists v, UMap.MapsTo v b m2 /\ Rel.eq g u v;
+  cltle_r : forall u b, UMap.MapsTo u b m2 -> exists v, UMap.MapsTo v b m1 /\ Rel.eq g u v;
   cltle_u : forall u v, UMap.In u m1 -> UMap.In v m2 -> Rel.eq g u v -> Level.eq u v;
   cltle_b : if chg then True else UMap.Equal m1 m2
 }.
@@ -576,6 +576,14 @@ Record clean_ltle_Spec g (m1 m2 : UMap.t bool) (chg : bool) : Prop := {
 Lemma clean_ltle_spec : forall (g : Universes) ltle
   (m : forall u, UMap.In u ltle -> UMap.In u g.(entries)),
   let '(ans, chg) := clean_ltle g ltle m in clean_ltle_Spec g.(entries) ltle ans chg.
+Proof.
+intros g ltle p.
+unfold clean_ltle; apply fold_rec; cbn in *; clear.
++ intros m Hm; split.
+  - intros u b Hu; eelim Hm; eassumption.
+  - intros u b Hu; apply F.empty_mapsto_iff in Hu; elim Hu.
+  - intros u v Hu Hv.
+
 
 Lemma clean_ltle_identity : forall (g : Universes) ltle
   (m : forall u, UMap.In u ltle -> UMap.In u g.(entries)),
