@@ -795,6 +795,11 @@ Qed.
 
 Definition forward_traverse (g : Universes) (lvl : N) (n : canonical_node) (u : Level.t) : unit.
 Proof.
+refine (
+Fix _ (fun u => _ )
+  (fun u traverse => _)
+  u nil
+).
 
 let rec forward_traverse f_traversed g v_klvl x y =
   let y = repr g y in
