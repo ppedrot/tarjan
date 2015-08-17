@@ -663,35 +663,38 @@ Admitted.
 
 Check get_ltle.
 
-Definition get_gtge (g : Universes) (n : canonical_node)
+Program Definition get_gtge (g : Universes) (n : canonical_node)
   (m : forall u, USet.In u n.(gtge) -> UMap.In u g.(entries)) :
-  USet.t * canonical_node * Universes.
-Proof.
-refine (
-  let cleaned := clean_gtge g n.(gtge) m in
-  if snd cleaned then
-    let n := {|
-      univ := n.(univ);
-      Univ.gtge := fst cleaned;
-      ltle := n.(ltle);
-      rank := n.(rank);
-      klvl := n.(klvl);
-      ilvl := n.(ilvl)
-    |} in
-    let g := {|
-      entries := UMap.add n.(univ) (Canonical n) g.(entries);
-      index := g.(index);
-      n_nodes := g.(n_nodes);
-      n_edges := g.(n_edges)
-    |} in
-    (fst cleaned, n, {| ugraph := g |})
-  else (n.(gtge), n, g)
-).
-+ admit.
-+ admit.
-+ admit.
-+ admit.
-Qed.
+  USet.t * canonical_node * Universes :=
+let '(ans, chg) := clean_gtge g n.(gtge) m in
+if chg then
+  let n := {|
+    univ := n.(univ);
+    Univ.gtge := ans;
+    ltle := n.(ltle);
+    rank := n.(rank);
+    klvl := n.(klvl);
+    ilvl := n.(ilvl)
+  |} in
+  let g := {|
+    entries := UMap.add n.(univ) (Canonical n) g.(entries);
+    index := g.(index);
+    n_nodes := g.(n_nodes);
+    n_edges := g.(n_edges)
+  |} in
+  (ans, n, {| ugraph := g |})
+else (n.(gtge), n, g)
+.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+
+Check get_gtge.
 
 Set Implicit Arguments.
 
