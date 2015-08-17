@@ -582,9 +582,10 @@ unfold clean_ltle; apply fold_rec; cbn in *; clear.
 + intros m Hm; split.
   - intros u b Hu; eelim Hm; eassumption.
   - intros u b Hu; apply F.empty_mapsto_iff in Hu; elim Hu.
-  - intros u v Hu Hv H; apply eq_alt_iff in H.
-    destruct H as [H|H]; [assumption|].
-    
+  - intros u v Hu Hv H.
+    apply F.empty_in_iff in Hv; elim Hv.
+  -
++
 
 
 Lemma clean_ltle_identity : forall (g : Universes) ltle
