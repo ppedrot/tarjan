@@ -567,8 +567,7 @@ Qed.
 
 Check safe_repr.
 
-Definition clean_ltle (g : Universes) (ltle : UMap.t bool)
-  (m : forall u, UMap.In u ltle -> UMap.In u g.(entries)) : UMap.t bool * bool :=
+Definition clean_ltle (g : Universes) (ltle : UMap.t bool) : UMap.t bool * bool :=
 let fold u strict accu :=
   let v := (repr g u).(univ) in
   (UMap.add v strict (fst accu), if Level.eq_dec u v then snd accu else true)
@@ -584,7 +583,7 @@ Record clean_ltle_Spec g (m1 m2 : UMap.t bool) (chg : bool) : Prop := {
 
 Lemma clean_ltle_spec : forall (g : Universes) ltle
   (m : forall u, UMap.In u ltle -> UMap.In u g.(entries)),
-  let '(ans, chg) := clean_ltle g ltle m in clean_ltle_Spec g.(entries) ltle ans chg.
+  let '(ans, chg) := clean_ltle g ltle in clean_ltle_Spec g.(entries) ltle ans chg.
 Proof.
 intros g ltle p.
 unfold clean_ltle; apply fold_rec; cbn in *.
@@ -613,12 +612,11 @@ unfold clean_ltle; apply fold_rec; cbn in *.
 Admitted.
 
 
-Lemma clean_ltle_identity : forall (g : Universes) ltle
-  (m : forall u, UMap.In u ltle -> UMap.In u g.(entries)),
-  let ans := clean_ltle g ltle m in
+Lemma clean_ltle_identity : forall (g : Universes) ltle,
+  let ans := clean_ltle g ltle in
   snd ans = false -> UMap.Equal (fst ans) ltle.
 Proof.
-intros g init m ans.
+intros g init (* m *) ans.
 unfold clean_ltle in ans.
 unfold ans; apply fold_rec; cbn in *; clear.
 + intros m Hm _ x; rewrite F.empty_o.
