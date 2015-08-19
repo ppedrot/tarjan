@@ -584,7 +584,9 @@ unfold clean_ltle; apply fold_rec; cbn in *; clear.
   - intros u b Hu; apply F.empty_mapsto_iff in Hu; elim Hu.
   - intros u v Hu Hv H.
     apply F.empty_in_iff in Hv; elim Hv.
-  -
+  - intros u; rewrite F.empty_o .
+    apply F.not_find_in_iff.
+    intros [? ?]; eelim Hm; eassumption.
 +
 
 
