@@ -588,16 +588,16 @@ Proof.
 intros g ltle p.
 unfold clean_ltle; apply fold_rec; cbn in *.
 + intros m Hm; split.
-  - intros u b Hu; eelim Hm; eassumption.
-  - intros u b Hu; apply F.empty_mapsto_iff in Hu; elim Hu.
+  - intros u [b Hu]; eelim Hm; eassumption.
+  - intros u Hu; apply F.empty_in_iff in Hu; elim Hu.
   - intros u v Hu Hv H.
     apply F.empty_in_iff in Hv; elim Hv.
   - intros u; rewrite F.empty_o .
     apply F.not_find_in_iff.
     intros [? ?]; eelim Hm; eassumption.
 + intros u b [accu chg] m1 m2 Hu Hm1 Hm2 Hspec; cbn in *; split.
-  - intros v b' Hv.
-    apply F.find_mapsto_iff in Hv.
+  - intros v Hv.
+    apply F.find_in_iff in Hv.
     rewrite (Hm2 _) in Hv.
     apply F.find_mapsto_iff in Hv; apply F.add_mapsto_iff in Hv.
     destruct Hv as [Hv|Hv].
