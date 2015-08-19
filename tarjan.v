@@ -849,6 +849,7 @@ Fix g.(ult_trans_wf) (fun u => _ )
     match (m.(klvl) ?= lvl)%N with
     | Lt =>
       let gtge := if Level.eq_dec n.(univ) m.(univ) then USet.empty else USet.singleton n.(univ) in
+      let '(ltle, m, g) := get_ltle g m _ in
       _
     | Eq =>
       if Level.eq_dec n.(univ) m.(univ) then (traversed, g)
@@ -858,7 +859,7 @@ Fix g.(ult_trans_wf) (fun u => _ )
   )
   u n nil
 ).
-admit.
++ admit.
 admit.
 
 let rec forward_traverse f_traversed g v_klvl x y =
