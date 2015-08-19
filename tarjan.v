@@ -433,6 +433,15 @@ assert (Heq : Level.eq v (repr g u).(univ)).
 rewrite <- Heq; assumption.
 Qed.
 
+Lemma repr_rel_eq : forall (g : Universes) u,
+  UMap.In u g.(entries) -> Rel.eq g.(entries) u (repr g u).(univ).
+Proof.
+intros g u Hu.
+apply repr_spec in Hu; destruct Hu as [v Hu Hv].
+transitivity v; [assumption|].
+apply rst_step; right; rewrite g.(ueq_canonical); [reflexivity|eassumption].
+Qed.
+
 Lemma repr_is_In : forall (g : Universes) u,
   UMap.In u g.(entries) -> UMap.In (repr g u).(univ) g.(entries).
 Proof.
@@ -578,7 +587,7 @@ Lemma clean_ltle_spec : forall (g : Universes) ltle
   let '(ans, chg) := clean_ltle g ltle m in clean_ltle_Spec g.(entries) ltle ans chg.
 Proof.
 intros g ltle p.
-unfold clean_ltle; apply fold_rec; cbn in *; clear.
+unfold clean_ltle; apply fold_rec; cbn in *.
 + intros m Hm; split.
   - intros u b Hu; eelim Hm; eassumption.
   - intros u b Hu; apply F.empty_mapsto_iff in Hu; elim Hu.
@@ -587,7 +596,19 @@ unfold clean_ltle; apply fold_rec; cbn in *; clear.
   - intros u; rewrite F.empty_o .
     apply F.not_find_in_iff.
     intros [? ?]; eelim Hm; eassumption.
-+
++ intros u b [accu chg] m1 m2 Hu Hm1 Hm2 Hspec; cbn in *; split.
+  - intros v b' Hv.
+    apply F.find_mapsto_iff in Hv.
+    rewrite (Hm2 _) in Hv.
+    apply F.find_mapsto_iff in Hv; apply F.add_mapsto_iff in Hv.
+    destruct Hv as [Hv|Hv].
+    { exists (univ (repr g u)); split.
+      + apply F.add_mapsto_iff; left; intuition.
+      + rewrite <- (proj1 Hv); apply repr_rel_eq; apply p; eexists; eassumption.
+    }
+    {
+    
+
 
 
 Lemma clean_ltle_identity : forall (g : Universes) ltle
