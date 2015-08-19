@@ -147,6 +147,9 @@ Proof.
 intros g u v H; apply rst_step; right; assumption.
 Qed.
 
+Definition le g (u v : Level.t) :=
+
+
 End Rel.
 
 Existing Instance Rel.Equivalence_eq.
