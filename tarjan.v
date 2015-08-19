@@ -845,7 +845,11 @@ Proof.
 refine (
 Fix _ (fun u => _ )
   (fun u n traverse =>
-    let m := repr g u in _
+    let m := repr g u in
+    if (m.(klvl) <? lvl)%N then
+      _
+    else
+      _
   )
   u n nil
 ).
