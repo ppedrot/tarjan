@@ -575,8 +575,8 @@ in
 UMap.fold fold ltle (UMap.empty bool, false).
 
 Record clean_ltle_Spec g (m1 m2 : UMap.t bool) (chg : bool) : Prop := {
-  cltle_l : forall u b, UMap.MapsTo u b m1 -> exists v, UMap.MapsTo v b m2 /\ Rel.eq g u v;
-  cltle_r : forall u b, UMap.MapsTo u b m2 -> exists v, UMap.MapsTo v b m1 /\ Rel.eq g u v;
+  cltle_l : forall u, UMap.In u m1 -> exists v, UMap.In v m2 /\ Rel.eq g u v;
+  cltle_r : forall u, UMap.In u m2 -> exists v, UMap.In v m1 /\ Rel.eq g u v;
   cltle_u : forall u v, UMap.In u m1 -> UMap.In v m2 -> Rel.eq g u v -> Level.eq u v;
   cltle_b : if chg then True else UMap.Equal m1 m2
 }.
