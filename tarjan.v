@@ -840,19 +840,26 @@ Fix N.lt_wf_0 (fun count => btT (N.succ count) -> _ -> _ -> btT count + Universe
 + apply N.lt_succ_diag_r.
 Qed.
 
-Definition forward_traverse (g : Universes) (lvl : N) (n : canonical_node) (u : Level.t) : unit.
+Definition forward_traverse (g : Universes) (lvl : N) (n : canonical_node) (u : Level.t) : (list Level.t * Universes).
 Proof.
 refine (
-Fix _ (fun u => _ )
-  (fun u n traverse =>
+Fix g.(ult_trans_wf) (fun u => _ )
+  (fun u traverse n traversed =>
     let m := repr g u in
-    if (m.(klvl) <? lvl)%N then
+    match (m.(klvl) ?= lvl)%N with
+    | Lt =>
+      let gtge := if Level.eq_dec n.(univ) m.(univ) then USet.empty else USet.singleton n.(univ) in
       _
-    else
-      _
+    | Eq =>
+      if Level.eq_dec n.(univ) m.(univ) then (traversed, g)
+      else _
+    | Gt => (traversed, g)
+    end
   )
   u n nil
 ).
+admit.
+admit.
 
 let rec forward_traverse f_traversed g v_klvl x y =
   let y = repr g y in
