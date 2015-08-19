@@ -661,8 +661,7 @@ unfold ans; apply fold_rec; cbn [fst snd] in *; clear.
 Qed.
 *)
 
-Definition clean_gtge (g : Universes) (gtge : USet.t)
-  (m : forall u, USet.In u gtge -> UMap.In u g.(entries)) : USet.t * bool.
+Definition clean_gtge (g : Universes) (gtge : USet.t) : USet.t * bool.
 Proof.
 refine (
   let fold u accu :=
@@ -713,7 +712,7 @@ Check get_ltle.
 Program Definition get_gtge (g : Universes) (n : canonical_node)
   (m : forall u, USet.In u n.(gtge) -> UMap.In u g.(entries)) :
   USet.t * canonical_node * Universes :=
-let '(ans, chg) := clean_gtge g n.(gtge) m in
+let '(ans, chg) := clean_gtge g n.(gtge) in
 if chg then
   let n := {|
     univ := n.(univ);
