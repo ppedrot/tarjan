@@ -606,9 +606,11 @@ unfold clean_ltle; apply fold_rec; cbn in *.
       + apply F.add_mapsto_iff; left; intuition.
       + rewrite <- (proj1 Hv); apply repr_rel_eq; apply p; eexists; eassumption.
     }
-    {
-    
-
+    { eapply cltle_l in Hspec; [|now intuition eauto].
+      destruct Hspec as [w Hw]; exists w.
+      split; [|now intuition].
+      apply F.add_mapsto_iff.
+Admitted.
 
 
 Lemma clean_ltle_identity : forall (g : Universes) ltle
