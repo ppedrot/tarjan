@@ -844,8 +844,10 @@ Definition forward_traverse (g : Universes) (lvl : N) (n : canonical_node) (u : 
 Proof.
 refine (
 Fix _ (fun u => _ )
-  (fun u traverse => _)
-  u nil
+  (fun u n traverse =>
+    let m := repr g u in _
+  )
+  u n nil
 ).
 
 let rec forward_traverse f_traversed g v_klvl x y =
