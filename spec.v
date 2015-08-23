@@ -72,11 +72,14 @@ Inductive is_canonical g u : Prop :=
 
 Module Rel.
 
+Definition compose {A} (R1 R2 : relation A) : relation A :=
+  fun x y => exists z, R1 x y /\ R2 y z.
+
 Definition eq g (u v : Level.t) :=
   clos_refl_sym_trans _ (relation_disjunction (ueq_step g) Level.eq) u v.
 
 Definition le g (u v : Level.t) :=
-  clos_refl_trans _ (relation_disjunction (eq g) (ule_step g)) u v.
+  eq g u v \/ clos_trans _ (compose (eq g) (ule_step g)) u v.
 
 End Rel.
 
