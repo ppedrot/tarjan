@@ -373,7 +373,7 @@ let ans :=
     )
     (UMap.cardinal g) u (UMap.empty bool) _ _
 in
-inl _.
+match ans with inl (prf, _) => inl prf | inr cycle => inr cycle end.
 Next Obligation.
 intros.
 .
