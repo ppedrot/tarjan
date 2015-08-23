@@ -183,15 +183,34 @@ remember (UMap.find u g) as elt; destruct elt as [[n|w]|].
   destruct Hc as [w H|w Heq H]; apply F.find_mapsto_iff in H; congruence.
 Qed.
 
+(*
+Lemma ult_step_dec_l : forall g u, {v | ult_step g u v} + {forall v, ~ ult_step g u v}.
+Proof.
+intros g u.
+remember (UMap.find u g) as elt; destruct elt as [[n|w]|].
++ SearchAbout UMap.Empty "dec".
+
+remember (UMap.mem v n.(ltle)) as b; destruct b.
+  - left; eapply ult_step_lt; [apply F.find_mapsto_iff; now eauto|].
+    apply UMapFacts.F.mem_in_iff; congruence.
+  - right; intros Hc.
+    destruct Hc as [w H Hi|w Heq H]; apply F.find_mapsto_iff in H; [|congruence].
+    apply UMapFacts.F.mem_in_iff in Hi; congruence.
++ destruct (Level.eq_dec v w).
+  - left; eapply ult_step_eq; [eassumption|]; apply F.find_mapsto_iff; congruence.
+  - right; intros Hc.
+    destruct Hc as [z H|z Heq H]; apply F.find_mapsto_iff in H; [congruence|].
+    replace z with w in * by congruence; now intuition.
++ right; intros Hc.
+  destruct Hc as [w H|w Heq H]; apply F.find_mapsto_iff in H; congruence.
+Qed.
+*)
+
+(*
 Lemma wf_ult_step : forall g,
   well_founded (Basics.flip (ult_step g)) -> well_founded (ult_step g).
 Proof.
 intros g Hr u; specialize (Hr u); revert u Hr.
-pattern g; apply (map_rect _ _ g).
-+ clear g; intros g Hg u Hr.
-
-SearchAbout UMap.cardinal.
-
-Qed.
+*)
 
 End Props.
