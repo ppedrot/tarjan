@@ -355,11 +355,14 @@ let ans :=
     )
     (fun n decide_acc u seen Hrw Hseen =>
       match UMap.find u seen with
-      | None => _
-      | Some false =>
-        let seen := UMap.add u true seen in
-        _
-      | Some true => _
+      | None =>
+        let seen := UMap.add u false seen in
+        match UMap.find u g with
+        | None => (_, exist _ (UMap.add u true seen) _)
+        | Some _ => _
+        end
+      | Some false => (_, _)
+      | Some true => (_, _)
       end
     )
     (UMap.cardinal g) u (UMap.empty bool) _ _
