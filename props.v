@@ -164,4 +164,23 @@ apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [H|H] _ IH].
       rewrite Hrw1, <- Hrw2; apply clos_trans_t1n_iff; assumption. }
 Qed.
 
+Lemma map_rect : forall elt (P : UMap.t elt -> Type) (m : UMap.t elt),
+  (forall m0, UMap.Empty m0 -> P m0) ->
+  (forall k e m1 m2, UMap.MapsTo k e m ->
+  ~ UMap.In k m1 -> Add k e m1 m2 -> P m1 -> P m2) ->
+  P m.
+Proof.
+intros elt P m H0 HS.
+refine (@fold_rec _ unit (fun g _ => P g) (fun _ _ _ => tt) tt m H0 _); shelve_unifiable.
+intros; eapply HS; eassumption.
+Qed.
+
+Lemma wf_ult_step : forall g,
+  well_founded (Basics.flip (ult_step g)) -> well_founded (ult_step g).
+Proof.
+intros g Hr u; specialize (Hr u); revert u Hr.
+
+
+Qed.
+
 End Props.
