@@ -99,8 +99,10 @@ intros u1 u2 Hu v1 v2 Hv [H|H].
     exists w; split; [|rewrite Hwr; assumption].
     exists z; split; [assumption|assumption].
   - eright; [|apply IH; [reflexivity|assumption]].
-    
-
+    destruct H as [w [[z [Hzl Hzr]] Hwr]].
+    rewrite Hu in Hzl; clear u1 Hu.
+    exists w; split; [|rewrite Hwr; reflexivity].
+    exists z; split; [assumption|assumption].
 Qed.
 
 Instance PreOrder_le : forall g, PreOrder (Rel.le g).
