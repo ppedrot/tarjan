@@ -344,15 +344,18 @@ apply HR; assumption.
 Qed.
 
 Program Definition decide_acc g u :
-  {Acc (rel_step g) u} + {clos_trans _ (rel_step g) u u} :=
+  (Acc (rel_step g) u) + {v | clos_trans _ (rel_step g) v v} :=
 
-Fix (Wf_nat.lt_wf) (fun size => forall v seen, size = UMap.cardinal g - USet.cardinal seen -> {Acc (rel_step g) v} + {clos_trans _ (rel_step g) u v})
+let P u := ((Acc (rel_step g) u) + {v | clos_trans _ (rel_step g) v v})%type in
+Fix (Wf_nat.lt_wf)
+  (fun size => forall v seen, size = UMap.cardinal g - USet.cardinal seen -> P u)
   (fun n decide_acc u seen Hrw =>
     if USet.mem u seen then _
     else _
   )
   (UMap.cardinal g) u USet.empty _.
-
+Next Obligation.
+intros.
 .
 
 Lemma decide_wf : forall g, 
