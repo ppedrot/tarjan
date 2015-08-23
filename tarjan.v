@@ -147,9 +147,6 @@ Proof.
 intros g u v H; apply rst_step; right; assumption.
 Qed.
 
-Definition le g (u v : Level.t) :=
-
-
 End Rel.
 
 Existing Instance Rel.Equivalence_eq.
@@ -679,7 +676,7 @@ Defined.
 Program Definition get_ltle (g : Universes) (n : canonical_node)
   (m : forall u, UMap.In u n.(ltle) -> UMap.In u g.(entries)) :
   UMap.t bool * canonical_node * Universes :=
-let '(ans, chg) := clean_ltle g n.(ltle) m in
+let '(ans, chg) := clean_ltle g n.(ltle) in
 if chg then
   let sz := N.of_nat (UMap.cardinal n.(Univ.ltle)) in
   let sz2 := N.of_nat (UMap.cardinal ans) in
@@ -840,9 +837,7 @@ Fix N.lt_wf_0 (fun count => btT (N.succ count) -> _ -> _ -> btT count + Universe
 + apply N.lt_succ_diag_r.
 Qed.
 
-Definition forward_traverse (g : Universes) (lvl : N) (n : canonical_node) (u : Level.t) : (list Level.t * Universes).
-Proof.
-refine (
+Program Definition forward_traverse (g : Universes) (lvl : N) (n : canonical_node) (u : Level.t) : (list Level.t * Universes) :=
 Fix g.(ult_trans_wf) (fun u => _ )
   (fun u traverse n traversed =>
     let m := repr g u in
@@ -858,9 +853,13 @@ Fix g.(ult_trans_wf) (fun u => _ )
     end
   )
   u n nil
-).
-+ admit.
-admit.
+.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
 
 let rec forward_traverse f_traversed g v_klvl x y =
   let y = repr g y in
