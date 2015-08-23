@@ -164,22 +164,33 @@ apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [H|H] _ IH].
       rewrite Hrw1, <- Hrw2; apply clos_trans_t1n_iff; assumption. }
 Qed.
 
-Lemma map_rect : forall elt (P : UMap.t elt -> Type) (m : UMap.t elt),
-  (forall m0, UMap.Empty m0 -> P m0) ->
-  (forall k e m1 m2, UMap.MapsTo k e m ->
-  ~ UMap.In k m1 -> Add k e m1 m2 -> P m1 -> P m2) ->
-  P m.
+Lemma ult_step_dec : forall g u v, {ult_step g u v} + {~ ult_step g u v}.
 Proof.
-intros elt P m H0 HS.
-refine (@fold_rec _ unit (fun g _ => P g) (fun _ _ _ => tt) tt m H0 _); shelve_unifiable.
-intros; eapply HS; eassumption.
+intros g u v.
+remember (UMap.find u g) as elt; destruct elt as [[n|w]|].
++ remember (UMap.mem v n.(ltle)) as b; destruct b.
+  - left; eapply ult_step_lt; [apply F.find_mapsto_iff; now eauto|].
+    apply UMapFacts.F.mem_in_iff; congruence.
+  - right; intros Hc.
+    destruct Hc as [w H Hi|w Heq H]; apply F.find_mapsto_iff in H; [|congruence].
+    apply UMapFacts.F.mem_in_iff in Hi; congruence.
++ destruct (Level.eq_dec v w).
+  - left; eapply ult_step_eq; [eassumption|]; apply F.find_mapsto_iff; congruence.
+  - right; intros Hc.
+    destruct Hc as [z H|z Heq H]; apply F.find_mapsto_iff in H; [congruence|].
+    replace z with w in * by congruence; now intuition.
++ right; intros Hc.
+  destruct Hc as [w H|w Heq H]; apply F.find_mapsto_iff in H; congruence.
 Qed.
 
 Lemma wf_ult_step : forall g,
   well_founded (Basics.flip (ult_step g)) -> well_founded (ult_step g).
 Proof.
 intros g Hr u; specialize (Hr u); revert u Hr.
+pattern g; apply (map_rect _ _ g).
++ clear g; intros g Hg u Hr.
 
+SearchAbout UMap.cardinal.
 
 Qed.
 
