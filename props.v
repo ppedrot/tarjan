@@ -365,7 +365,7 @@ let ans :=
         | Some (Equiv v) =>
           (decide_acc (pred size) _ v seen _ _ _ >>= fun ans =>
 (*           let '(prf, seen) := ans in *)
-          @inl _ _ (_, exist _ (UMap.add u true _) _))
+          inl (_, exist _ (UMap.add u true _) _))
         | Some (Canonical n) => _
         end
       | Some false => inl _
