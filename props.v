@@ -352,27 +352,27 @@ let ans :=
   Fix (Wf_nat.lt_wf)
     (fun size => forall u seen,
       size = UMap.cardinal g - UMap.cardinal seen ->
-      (forall u, UMap.MapsTo u true seen -> Acc (rel_step g) u) ->
+      (forall v, UMap.MapsTo v true seen -> Acc (rel_step g) v) ->
+      (forall v, UMap.MapsTo v false seen -> clos_trans _ (rel_step g) u v) ->
       (((Acc (rel_step g) u) * {m : UMap.t bool | True}) + {v | clos_trans _ (rel_step g) v v})
     )
-    (fun size decide_acc u seen Hrw Hseen =>
+    (fun size decide_acc u seen Hrw Hst Hsf =>
       match UMap.find u seen with
       | None =>
         let seen := UMap.add u false seen in
         match UMap.find u g with
         | None => inl (_, exist _ (UMap.add u true seen) _)
         | Some (Equiv v) =>
-          decide_acc (pred size) _ v seen _ _ >>= fun ans => _
+          decide_acc (pred size) _ v seen _ _ _ >>= fun ans => _
 (*           let '(prf, seen) := ans in *)
-(*           _
-(*           inl (_, exist _ (UMap.add u true seen) _) *) *)
+(*           inl (_, exist _ (UMap.add u true seen) _) *)
         | Some (Canonical n) => _
         end
       | Some false => _
       | Some true => _
       end
     )
-    (UMap.cardinal g) u (UMap.empty bool) _ _
+    (UMap.cardinal g) u (UMap.empty bool) _ _ _
 in
 match ans with inl (prf, _) => inl prf | inr cycle => inr cycle end.
 Next Obligation.
