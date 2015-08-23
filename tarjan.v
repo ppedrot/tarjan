@@ -557,10 +557,9 @@ Extract Inductive bool => "bool" [ "true" "false" ].
 Extract Inductive prod => "(*)"  [ "(,)" ].
 Extraction Univ.
 
-End Univ.
-
 Extraction Univ.
 
+(*
 (* Checks most of the invariants of the graph. For debugging purposes. *)
 let check_universes_invariants g =
   let n_edges = ref 0 in
@@ -827,3 +826,5 @@ let insert_edge strict ucan vcan g =
     (** Unlikely event: fatal error or signal *)
     let () = cleanup_universes g in
     raise e
+
+*)
