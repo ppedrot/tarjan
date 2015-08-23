@@ -355,7 +355,10 @@ Fix (Wf_nat.lt_wf)
   (fun n decide_acc u seen Hrw Hseen =>
     match UMap.find u seen with
     | None => _
-    | Some _ => _
+    | Some false =>
+      let seen := UMap.add u true seen in
+      _
+    | Some true => _
     end
   )
   (UMap.cardinal g) u (UMap.empty bool) _ _.
