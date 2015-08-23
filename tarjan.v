@@ -532,12 +532,12 @@ Fix g.(rel_trans_wf) (fun u => _ -> _)
     | None =>
       if Level.eq_dec n.(univ) v then (true, UMap.add n.(univ) true status)
       else
-        let fold w accu :=
+        let fold w p accu :=
           let '(merge, status) := accu in
           let '(merge', status) := find_to_merge w _ status in
           (orb merge merge', status)
         in
-        let '(merge, status) := USet.fold fold n.(gtge) (false, status) in
+        let '(merge, status) := set_fold_strong n.(gtge) fold (false, status) in
         (merge, UMap.add n.(univ) merge status)
     | Some false => (false, status)
     | Some true => (true, status)
