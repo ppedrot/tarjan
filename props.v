@@ -361,7 +361,7 @@ let ans :=
         | None => (_, exist _ (UMap.add u true seen) _)
         | Some (Equiv v) =>
           let '(prf, seen) := decide_acc _ _ v seen _ _ in
-          _
+          (_, exist _ (UMap.add u true seen) _)
         | Some (Canonical n) => _
         end
       | Some false => (_, _)
