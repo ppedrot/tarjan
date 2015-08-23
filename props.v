@@ -359,7 +359,10 @@ let ans :=
         let seen := UMap.add u false seen in
         match UMap.find u g with
         | None => (_, exist _ (UMap.add u true seen) _)
-        | Some _ => _
+        | Some (Equiv v) =>
+          let '(prf, seen) := decide_acc _ _ v seen _ _ in
+          _
+        | Some (Canonical n) => _
         end
       | Some false => (_, _)
       | Some true => (_, _)
