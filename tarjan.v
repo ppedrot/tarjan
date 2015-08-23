@@ -546,7 +546,50 @@ Fix g.(rel_trans_wf) (fun u => _ -> _)
   u (UMap.empty _).
 Next Obligation.
 intros g _ v u _ status n elt Helt Hd w Hw [merge accu] _ _ _.
+unfold flip.
 Admitted.
+
+(* Program Definition get_new_edges (g : Universes) to_merge := *)
+
+
+(*
+
+let get_new_edges g to_merge =
+  (* Computing edge sets. *)
+  let to_merge_lvl =
+    List.fold_left (fun acc u -> LMap.add u.univ u acc)
+      LMap.empty to_merge
+  in
+  let ltle =
+    LMap.fold (fun _ n acc ->
+      LMap.merge (fun _ strict1 strict2 ->
+        match strict1, strict2 with
+        | Some true, _ | _, Some true -> Some true
+        | _, _ -> Some false)
+        acc n.ltle)
+      to_merge_lvl LMap.empty
+  in
+  let ltle, _ = clean_ltle g ltle in
+  let ltle =
+    LMap.merge (fun _ a strict ->
+      match a, strict with
+      | Some _, Some true ->
+        (* There is a lt edge inside the new component. This is a
+            "bad cycle". *)
+        raise CycleDetected
+      | Some _, Some false -> None
+      | _, _ -> strict
+    ) to_merge_lvl ltle
+  in
+  let gtge =
+    LMap.fold (fun _ n acc -> LSet.union acc n.gtge)
+      to_merge_lvl LSet.empty
+  in
+  let gtge, _ = clean_gtge g gtge in
+  let gtge = LSet.diff gtge (LMap.domain to_merge_lvl) in
+  (ltle, gtge)
+
+*)
 
 End Univ.
 
