@@ -343,6 +343,8 @@ induction Heq; [apply t_step|eapply t_trans; eassumption].
 apply HR; assumption.
 Qed.
 
+Notation "t >>= u" := (match t return _ with inl x => u x | inr y => inr y end) (at level 45, u at level 200, right associativity).
+
 Program Definition decide_acc g u :
   (Acc (rel_step g) u) + {v | clos_trans _ (rel_step g) v v} :=
 
@@ -351,26 +353,29 @@ let ans :=
     (fun size => forall u seen,
       size = UMap.cardinal g - UMap.cardinal seen ->
       (forall u, UMap.MapsTo u true seen -> Acc (rel_step g) u) ->
-      ((Acc (rel_step g) u) + {v | clos_trans _ (rel_step g) v v}) * {m : UMap.t bool | True}
+      (((Acc (rel_step g) u) * {m : UMap.t bool | True}) + {v | clos_trans _ (rel_step g) v v})
     )
     (fun n decide_acc u seen Hrw Hseen =>
       match UMap.find u seen with
       | None =>
         let seen := UMap.add u false seen in
-        match UMap.find u g with
-        | None => (_, exist _ (UMap.add u true seen) _)
-        | Some (Equiv v) =>
-          let '(prf, seen) := decide_acc _ _ v seen _ _ in
-          (_, exist _ (UMap.add u true seen) _)
-        | Some (Canonical n) => _
-        end
-      | Some false => (_, _)
-      | Some true => (_, _)
+(*         match UMap.find u g with *)
+(*         | None => inl (_, exist _ (UMap.add u true seen) _) *)
+(*         | Some (Equiv v) => *)
+(*           decide_acc _ _ v seen _ _ >>= fun ans => *)
+(*           let '(prf, seen) := ans in *)
+(*           inl (_, exist _ (UMap.add u true seen) _) *)
+
+_
+(*         | Some (Canonical n) => _ *)
+(*         end *)
+      | Some false => _
+      | Some true => _
       end
     )
     (UMap.cardinal g) u (UMap.empty bool) _ _
 in
-fst ans.
+inl _.
 Next Obligation.
 intros.
 .
