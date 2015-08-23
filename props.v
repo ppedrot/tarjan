@@ -359,16 +359,14 @@ let ans :=
       match UMap.find u seen with
       | None =>
         let seen := UMap.add u false seen in
-(*         match UMap.find u g with *)
-(*         | None => inl (_, exist _ (UMap.add u true seen) _) *)
-(*         | Some (Equiv v) => *)
+        match UMap.find u g with
+        | None => inl (_, exist _ (UMap.add u true seen) _)
+        | Some (Equiv v) => _
 (*           decide_acc _ _ v seen _ _ >>= fun ans => *)
 (*           let '(prf, seen) := ans in *)
 (*           inl (_, exist _ (UMap.add u true seen) _) *)
-
-_
-(*         | Some (Canonical n) => _ *)
-(*         end *)
+        | Some (Canonical n) => _
+        end
       | Some false => _
       | Some true => _
       end
