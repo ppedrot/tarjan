@@ -20,8 +20,6 @@ Module Import UMapFacts := FMapFacts.WProperties_fun(Level)(UMap).
 
 Inductive status := Visited | WeakVisited | ToMerge.
 
-Print Transparent Dependencies is_canonical_rt.
-
 Definition tip g u :=
   {| univ := u;
     ltle := UMap.empty bool;
