@@ -104,11 +104,6 @@ destruct elt as [[n|v]|]; intros p.
 + apply F.in_find_iff in Hu; intuition.
 Qed.
 
-(* Lemma Repr_fun : forall (g : Universes) u n1 n2,
-  Repr g.(entries) u n1 -> Repr g.(entries) u n2 -> n1 = n2.
-Proof.
- *)
-
 Lemma repr_is_canonical : forall (g : Universes) u,
   UMap.In u g.(entries) -> is_canonical g.(entries) (repr g u).(univ).
 Proof.
