@@ -87,6 +87,13 @@ Proof.
 intros g u v H; apply rst_step; right; assumption.
 Qed.
 
+Instance PreOrder_le : forall g, PreOrder (Rel.le g).
+Proof.
+intros g; split.
++ intros u; left; reflexivity.
++ intros u v w Hl Hr; right.
+
+
 Lemma eq_alt_iff : forall g u v,
   Rel.eq g u v <-> (Level.eq u v \/ clos_refl_sym_trans _ (ueq_step g) u v).
 Proof.

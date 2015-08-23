@@ -83,6 +83,8 @@ Definition le g (u v : Level.t) :=
 
 End Rel.
 
+Notation "R1 * R2" := (compose R1 R2).
+
 Record Repr g u n : Prop :=  {
   Repr_wit : Level.t;
   Repr_rel : Rel.eq g u Repr_wit;
