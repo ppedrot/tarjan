@@ -343,6 +343,17 @@ induction Heq; [apply t_step|eapply t_trans; eassumption].
 apply HR; assumption.
 Qed.
 
+Program Definition decide_acc g u :
+  {Acc (rel_step g) u} + {clos_trans _ (rel_step g) u u} :=
+Fix (Wf_nat.lt_wf) (fun size => _)
+  (fun n decide_acc =>
+    _
+  )
+  (UMap.cardinal g).
+.
+
+Lemma decide_wf : forall g, 
+
 Lemma ill_founded_has_cycle : forall g,
   ~ well_founded (rel_step g) -> {u | clos_trans _ (rel_step g) u u}.
 Proof.
@@ -362,7 +373,9 @@ revert g Hg Heqsize; induction Hwf as [size _ IH]; intros g Hg Heq; subst.
 remember (partition (is_source g) g) as p; symmetry in Heqp.
 destruct p as [g1 g2].
 remember (UMap.is_empty g1) as b; symmetry in Heqb; destruct b.
-+ admit.
++ assert (H : forall u v, UMap.In u g -> rel_step g v u -> False).
+  admit.
+  admit.
 + assert (Hlt : (UMap.cardinal g1) <> 0).
   { intros Heq; rewrite <- UMapFacts.cardinal_Empty in Heq.
     apply UMap.is_empty_1 in Heq; congruence. }
