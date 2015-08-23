@@ -300,16 +300,28 @@ pattern m; apply map_induction; clear - Hf.
       rewrite <- F.find_mapsto_iff; assumption.
     }
     exists (k', e'); split; [assumption|].
-    
+    rewrite F.find_mapsto_iff, Ha, <- F.find_mapsto_iff.
+    assert (Hd : ~ Level.eq k k').
+    { intros Hc; rewrite <- Hc in *.
+      elim Hk; eexists; eassumption. }
+    rewrite F.add_neq_mapsto_iff; eassumption.
+Unshelve.
+assumption.
 Qed.
-
 
 Lemma is_rel_source : forall g u, {v | rel_step g v u} + {forall v, ~ rel_step g u v}.
 Proof.
 intros g u.
 pose (b := UMapFacts.exists_ (fun v _ => if rel_step_dec g u v then true else false) g).
+assert (Hf : Proper (Level.eq ==> eq ==> eq) (fun v (_ : univ_entry) => if rel_step_dec g u v then true else false)).
+{
+  clear; intros v1 v2 Hv b ? <-.
+  destruct rel_step_dec as [Hl|Hl];
+  destruct rel_step_dec as [Hr|Hr]; trivial; exfalso;
+  rewrite <- Hv in Hr; contradiction.
+}
 remember b as ex; destruct ex.
-+ 
++ symmetry in Heqex; apply exists_iff in Heqex.
 
 Lemma ill_founded_has_cycle : forall g,
   ~ well_founded (rel_step g) -> {u | clos_trans _ (rel_step g) u u}.
