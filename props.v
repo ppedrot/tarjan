@@ -339,7 +339,16 @@ Lemma ill_founded_has_cycle : forall g,
   ~ well_founded (rel_step g) -> {u | clos_trans _ (rel_step g) u u}.
 Proof.
 intros g Hg.
-pose (is_source := fun u => )
+pose (is_source := fun u (_ : univ_entry) => if is_rel_source g u then true else false).
+assert (Hf : Proper (Level.eq ==> eq ==> eq) is_source).
+{
+  unfold is_source; clear; intros u1 u2 Hu e ? <-.
+  destruct is_rel_source as [Hl|Hl];
+  destruct is_rel_source as [Hr|Hr]; trivial; exfalso.
+  + destruct Hl as [v Hv]; elim (Hr v); rewrite <- Hu; assumption.
+  + destruct Hr as [v Hv]; elim (Hl v); rewrite Hu; assumption.
+}
+
 
 (*
 Lemma rel_step_dec_l : forall g u, {v | rel_step g u v} + {forall v, ~ rel_step g u v}.
