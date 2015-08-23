@@ -309,7 +309,7 @@ Unshelve.
 assumption.
 Qed.
 
-Lemma is_rel_source : forall g u, {v | rel_step g v u} + {forall v, ~ rel_step g u v}.
+Lemma is_rel_source : forall g u, {v | rel_step g v u} + {forall v, ~ rel_step g v u}.
 Proof.
 intros g u.
 pose (b := UMapFacts.exists_ (fun v _ => if rel_step_dec g v u then true else false) g).
@@ -327,6 +327,12 @@ remember b as ex; destruct ex; symmetry in Heqex.
   destruct rel_step_dec; [|congruence].
   left; exists v; assumption.
 + right; intros v Hv.
+  assert (b = true); [|congruence].
+  unfold b; rewrite exists_iff; [|assumption].
+  assert (He : exists e, UMap.MapsTo v e g); [destruct Hv; firstorder|].
+  destruct He as [e He].
+  exists (v, e); split; cbn; [assumption|].
+  destruct rel_step_dec; congruence.
 Qed.
 
 Lemma ill_founded_has_cycle : forall g,
