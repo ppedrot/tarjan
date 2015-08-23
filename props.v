@@ -349,15 +349,16 @@ Program Definition decide_acc g u :
 Fix (Wf_nat.lt_wf)
   (fun size => forall u seen,
     size = UMap.cardinal g - UMap.cardinal seen ->
+    (forall u, UMap.MapsTo u true seen -> Acc (rel_step g) u) ->
     ((Acc (rel_step g) u) + {v | clos_trans _ (rel_step g) v v})
   )
-  (fun n decide_acc u seen Hrw =>
+  (fun n decide_acc u seen Hrw Hseen =>
     match UMap.find u seen with
     | None => _
-    | Some _ =>
+    | Some _ => _
     end
   )
-  (UMap.cardinal g) u (UMap.empty _) _.
+  (UMap.cardinal g) u (UMap.empty bool) _ _.
 Next Obligation.
 intros.
 .
