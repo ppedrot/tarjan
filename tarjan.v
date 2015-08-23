@@ -545,7 +545,7 @@ Fix g.(rel_trans_wf) (fun u => _ -> _)
   )
   u (UMap.empty _).
 Next Obligation.
-intros g _ v u _ status n elt Helt Hd w [merge accu] _ _ _.
+intros g _ v u _ status n elt Helt Hd w Hw [merge accu] _ _ _.
 Admitted.
 
 End Univ.
