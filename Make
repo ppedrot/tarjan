@@ -1,3 +1,4 @@
 -R . Tarjan
 spec.v
+props.v
 tarjan.v

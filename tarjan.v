@@ -1,6 +1,6 @@
 Require FSets FMaps NArith Wellfounded.
 Require Import Program Setoid Morphisms BinNat Relations.
-Require Tarjan.spec.
+Require Tarjan.spec Tarjan.props.
 
 Obligation Tactic := idtac.
 Set Primitive Projections.
@@ -14,9 +14,10 @@ Module Univ
   (USet : FSetInterface.Sfun(Level))
 .
 
-Module Import Spec := spec.Spec(Level)(UMap)(USet).
 Module Import USetFacts := FSetFacts.WFacts_fun(Level)(USet).
 Module Import UMapFacts := FMapFacts.WProperties_fun(Level)(UMap).
+Module Import Spec := spec.Spec(Level)(UMap)(USet).
+Module Import Props := props.Props(Level)(UMap)(USet).
 
 Inductive status := Visited | WeakVisited | ToMerge.
 
