@@ -19,7 +19,7 @@ match l with
 | cons x l => P x /\ for_all P l
 end.
 
-Program Definition fold_strong {elt A} (m : UMap.t elt)
+Program Definition map_fold_strong {elt A} (m : UMap.t elt)
   (f : forall (k : Level.t) (e : elt), UMap.MapsTo k e m -> A -> A) (accu : A) : A :=
 (fix fold_strong l accu :=
 match l return for_all (fun p => UMap.MapsTo (fst p) (snd p) m) l -> A with
@@ -34,6 +34,24 @@ set (l := UMap.elements m) in *; clearbody l; induction l as [|[k e] l]; cbn.
 + split.
   - apply H, SetoidList.InA_cons_hd; reflexivity.
   - apply IHl; clear - H; intros k' e' Hm.
+    apply H, SetoidList.InA_cons_tl; assumption.
+Qed.
+
+Program Definition set_fold_strong {A} (m : USet.t)
+  (f : forall (k : Level.t), USet.In k m -> A -> A) (accu : A) : A :=
+(fix fold_strong l accu :=
+match l return for_all (fun p => USet.In p m) l -> A with
+| nil => fun _ => accu
+| cons k l => fun p => fold_strong l (f k (proj1 p) accu) (proj2 p)
+end) (USet.elements m) accu _.
+Next Obligation.
+intros A m _ _.
+assert (H := @USet.elements_2 m).
+set (l := USet.elements m) in *; clearbody l; induction l as [|k l]; cbn.
++ trivial.
++ split.
+  - apply H, SetoidList.InA_cons_hd; reflexivity.
+  - apply IHl; clear - H; intros k' Hm.
     apply H, SetoidList.InA_cons_tl; assumption.
 Qed.
 
