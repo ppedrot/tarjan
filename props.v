@@ -271,6 +271,11 @@ remember (UMap.find u g) as elt; destruct elt as [[n|w]|].
   destruct Hc as [w H|w Heq H]; apply F.find_mapsto_iff in H; congruence.
 Qed.
 
+Lemma ill_founded_has_cycle : forall g,
+  ~ well_founded (rel_step g) -> {u | clos_trans _ (rel_step g) u u}.
+Proof.
+
+
 (*
 Lemma rel_step_dec_l : forall g u, {v | rel_step g u v} + {forall v, ~ rel_step g u v}.
 Proof.
