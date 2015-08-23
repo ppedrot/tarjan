@@ -1,5 +1,5 @@
 Require FSets FMaps NArith Wellfounded.
-Require Import Program Setoid Morphisms BinNat Relations.
+Require Import Program Setoid Morphisms BinNat Relations Omega.
 Require Tarjan.spec.
 
 Obligation Tactic := idtac.
@@ -335,19 +335,48 @@ remember b as ex; destruct ex; symmetry in Heqex.
   destruct rel_step_dec; congruence.
 Qed.
 
+Instance clos_trans_inclusion : forall A,
+  Proper (inclusion _ ==> inclusion _) (clos_trans A).
+Proof.
+intros A R1 R2 HR x1 x2 Heq.
+induction Heq; [apply t_step|eapply t_trans; eassumption].
+apply HR; assumption.
+Qed.
+
 Lemma ill_founded_has_cycle : forall g,
   ~ well_founded (rel_step g) -> {u | clos_trans _ (rel_step g) u u}.
 Proof.
 intros g Hg.
-pose (is_source := fun u (_ : univ_entry) => if is_rel_source g u then true else false).
-assert (Hf : Proper (Level.eq ==> eq ==> eq) is_source).
+pose (is_source := fun g u (_ : univ_entry) => if is_rel_source g u then true else false).
+assert (Hf : forall g, Proper (Level.eq ==> eq ==> eq) (is_source g)).
 {
-  unfold is_source; clear; intros u1 u2 Hu e ? <-.
+  unfold is_source; clear; intros g u1 u2 Hu e ? <-.
   destruct is_rel_source as [Hl|Hl];
   destruct is_rel_source as [Hr|Hr]; trivial; exfalso.
   + destruct Hl as [v Hv]; elim (Hr v); rewrite <- Hu; assumption.
   + destruct Hr as [v Hv]; elim (Hl v); rewrite Hu; assumption.
 }
+remember (UMap.cardinal g) as size.
+assert (Hwf := Wf_nat.lt_wf size).
+revert g Hg Heqsize; induction Hwf as [size _ IH]; intros g Hg Heq; subst.
+remember (partition (is_source g) g) as p; symmetry in Heqp.
+destruct p as [g1 g2].
+remember (UMap.is_empty g1) as b; symmetry in Heqb; destruct b.
++ admit.
++ assert (Hlt : (UMap.cardinal g1) <> 0).
+  { intros Heq; rewrite <- UMapFacts.cardinal_Empty in Heq.
+    apply UMap.is_empty_1 in Heq; congruence. }
+  assert (Hsize : UMap.cardinal g1 + UMap.cardinal g2 = UMap.cardinal g).
+  { symmetry; apply Partition_cardinal; eapply partition_Partition; eauto. }
+  assert (Hi : {u | clos_trans _ (rel_step g2) u u}).
+  { apply (IH (UMap.cardinal g2)); [omega| |reflexivity].
+    clear - Heqp Hg; intros Hc; elim Hg; clear Hg.
+    admit. }
+  destruct Hi as [u Hu]; exists u.
+  eapply clos_trans_inclusion; [|eassumption].
+  admit.
+Qed.
+
 
 
 (*
