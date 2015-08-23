@@ -366,7 +366,8 @@ let ans :=
           decide_acc (pred size) _ v seen _ _ _ >>= fun ans =>
 (*           let '(prf, seen) := ans in *)
           inl (_, exist _ (UMap.add u true _) _)
-        | Some (Canonical n) => _
+        | Some (Canonical n) =>
+          UMap.fold _ n.(ltle) _
         end
       | Some false => inl _
       | Some true => inr _
