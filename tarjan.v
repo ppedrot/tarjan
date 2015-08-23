@@ -16,7 +16,7 @@ Module Univ
 Module Import USetFacts := FSetFacts.WFacts_fun(Level)(USet).
 Module Import UMapFacts := FMapFacts.WProperties_fun(Level)(UMap).
 
-Inductive status := NoMark | Visited | WeakVisited | ToMerge.
+Inductive status := Visited | WeakVisited | ToMerge.
 
 Record canonical_node :=
 { univ: Level.t;
