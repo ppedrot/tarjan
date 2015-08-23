@@ -561,36 +561,6 @@ Program Definition change_node (g : universes) (n : canonical_node) :=
     n_edges := g.(n_edges)
   |}.
 
-(* Lemma findA_inA : forall A B eqb l v,
-  @SetoidList.findA A B eqb l = Some v.
- *)
-(*
-Lemma clean_ltle_equiv : forall (g : Universes) ltle
-  (m : forall u, UMap.In u ltle -> UMap.In u g.(entries)),
-  let ans := clean_ltle g ltle m in
-  SetoidList.equivlistA (RelationPairs.RelProd (Rel.eq g) eq) (UMap.elements ltle) (UMap.elements (fst ans)).
-Proof.
-intros g init m ans.
-unfold clean_ltle in ans.
-unfold ans; apply fold_rec; cbn [fst snd] in *; clear.
-+ intros m Hm [accu b]; cbn in *.
-  rewrite elements_empty.
-  apply elements_Empty in Hm; rewrite Hm; intuition.
-+ intros u b [m b'] m1 m2 Hm Hm1 Hm2 IH [v b0]; cbn [fst snd] in *.
-  destruct (Level.eq_dec u v) as [Hrw|Hd].
-  - split; intro HIn.
-    { apply SetoidList.InA_eqA with (u, b); try typeclasses eauto.
-      + split; unfold RelationPairs.RelCompFun; cbn.
-
-
-  do 2 rewrite <- F.elements_mapsto_iff.
-  specialize (IH (v, b0)).
-  do 2 rewrite <- F.elements_mapsto_iff in IH.
-  do 2 rewrite F.find_mapsto_iff; rewrite Hm2.
-  rewrite
-Qed.
-*)
-
 Definition clean_gtge (g : Universes) (gtge : USet.t) : USet.t * bool.
 Proof.
 refine (
@@ -807,6 +777,26 @@ Next Obligation.
 Admitted.
 Next Obligation.
 Admitted.
+
+let rec find_to_merge to_revert g x v =
+  let x = repr g x in
+  match x.status with
+  | Visited -> false, to_revert   | ToMerge -> true, to_revert
+  | NoMark ->
+    let to_revert = x::to_revert in
+    if Level.equal x.univ v then
+      begin x.status <- ToMerge; true, to_revert end
+    else
+      begin
+        let merge, to_revert = LSet.fold
+          (fun y (merge, to_revert) ->
+            let merge', to_revert = find_to_merge to_revert g y v in
+            merge' || merge, to_revert) x.gtge (false, to_revert)
+        in
+        x.status <- if merge then ToMerge else Visited;
+        merge, to_revert
+      end
+  | _ -> assert false
 
 End Univ.
 
