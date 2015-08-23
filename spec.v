@@ -54,15 +54,15 @@ Inductive ule_step g (u : Level.t) (v : Level.t) : Prop :=
   UMap.MapsTo u (Equiv w) g ->
   ule_step g u v.
 
-Inductive ult_step g (u : Level.t) (v : Level.t) : Prop :=
-| ult_step_lt : forall n,
+Inductive rel_step g (u : Level.t) (v : Level.t) : Prop :=
+| rel_step_lt : forall n,
   UMap.MapsTo u (Canonical n) g ->
   UMap.In v n.(ltle) ->
-  ult_step g u v
-| ult_step_eq : forall w,
+  rel_step g u v
+| rel_step_eq : forall w,
   Level.eq v w ->
   UMap.MapsTo u (Equiv w) g ->
-  ult_step g u v.
+  rel_step g u v.
 
 Inductive is_canonical g u : Prop :=
 | canonical_intro : forall n,
@@ -92,9 +92,9 @@ Record Repr g u n : Prop :=  {
 Record Universes := {
   ugraph :> universes;
   ult_trans_wf :
-    well_founded (Basics.flip (ult_step ugraph.(entries)));
+    well_founded (Basics.flip (rel_step ugraph.(entries)));
   ult_complete : forall u v,
-    ult_step ugraph.(entries) u v -> UMap.In v ugraph.(entries);
+    rel_step ugraph.(entries) u v -> UMap.In v ugraph.(entries);
   ueq_canonical : forall u n,
     UMap.MapsTo u (Canonical n) ugraph.(entries) -> Level.eq u n.(univ);
   unv_topo_rel : forall u v m n,

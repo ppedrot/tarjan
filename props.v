@@ -29,13 +29,13 @@ destruct Hrw.
 + rewrite Hu, Hv in *; eapply ule_step_eq; eassumption.
 Qed.
 
-Instance Proper_ult_step : forall g, Proper (Level.eq ==> Level.eq ==> iff) (ult_step g).
+Instance Proper_rel_step : forall g, Proper (Level.eq ==> Level.eq ==> iff) (rel_step g).
 Proof.
 intros g; eapply proper_sym_impl_iff_2; [now eauto|now eauto|].
 intros u1 u2 Hu v1 v2 Hv Hrw.
 destruct Hrw.
-+ rewrite Hu, Hv in *; eapply ult_step_lt; eassumption.
-+ rewrite Hu, Hv in *; eapply ult_step_eq; eassumption.
++ rewrite Hu, Hv in *; eapply rel_step_lt; eassumption.
++ rewrite Hu, Hv in *; eapply rel_step_eq; eassumption.
 Qed.
 
 Instance Proper_is_canonical : forall g, Proper (Level.eq ==> iff) (is_canonical g).
@@ -185,18 +185,18 @@ apply clos_rst_rst1n_iff in Hr; induction Hr as [u|u v w [H|H] _ IH].
       rewrite Hrw1, <- Hrw2; apply clos_trans_t1n_iff; assumption. }
 Qed.
 
-Lemma ult_step_dec : forall g u v, {ult_step g u v} + {~ ult_step g u v}.
+Lemma rel_step_dec : forall g u v, {rel_step g u v} + {~ rel_step g u v}.
 Proof.
 intros g u v.
 remember (UMap.find u g) as elt; destruct elt as [[n|w]|].
 + remember (UMap.mem v n.(ltle)) as b; destruct b.
-  - left; eapply ult_step_lt; [apply F.find_mapsto_iff; now eauto|].
+  - left; eapply rel_step_lt; [apply F.find_mapsto_iff; now eauto|].
     apply UMapFacts.F.mem_in_iff; congruence.
   - right; intros Hc.
     destruct Hc as [w H Hi|w Heq H]; apply F.find_mapsto_iff in H; [|congruence].
     apply UMapFacts.F.mem_in_iff in Hi; congruence.
 + destruct (Level.eq_dec v w).
-  - left; eapply ult_step_eq; [eassumption|]; apply F.find_mapsto_iff; congruence.
+  - left; eapply rel_step_eq; [eassumption|]; apply F.find_mapsto_iff; congruence.
   - right; intros Hc.
     destruct Hc as [z H|z Heq H]; apply F.find_mapsto_iff in H; [congruence|].
     replace z with w in * by congruence; now intuition.
@@ -205,20 +205,20 @@ remember (UMap.find u g) as elt; destruct elt as [[n|w]|].
 Qed.
 
 (*
-Lemma ult_step_dec_l : forall g u, {v | ult_step g u v} + {forall v, ~ ult_step g u v}.
+Lemma rel_step_dec_l : forall g u, {v | rel_step g u v} + {forall v, ~ rel_step g u v}.
 Proof.
 intros g u.
 remember (UMap.find u g) as elt; destruct elt as [[n|w]|].
 + SearchAbout UMap.Empty "dec".
 
 remember (UMap.mem v n.(ltle)) as b; destruct b.
-  - left; eapply ult_step_lt; [apply F.find_mapsto_iff; now eauto|].
+  - left; eapply rel_step_lt; [apply F.find_mapsto_iff; now eauto|].
     apply UMapFacts.F.mem_in_iff; congruence.
   - right; intros Hc.
     destruct Hc as [w H Hi|w Heq H]; apply F.find_mapsto_iff in H; [|congruence].
     apply UMapFacts.F.mem_in_iff in Hi; congruence.
 + destruct (Level.eq_dec v w).
-  - left; eapply ult_step_eq; [eassumption|]; apply F.find_mapsto_iff; congruence.
+  - left; eapply rel_step_eq; [eassumption|]; apply F.find_mapsto_iff; congruence.
   - right; intros Hc.
     destruct Hc as [z H|z Heq H]; apply F.find_mapsto_iff in H; [congruence|].
     replace z with w in * by congruence; now intuition.
@@ -228,8 +228,8 @@ Qed.
 *)
 
 (*
-Lemma wf_ult_step : forall g,
-  well_founded (Basics.flip (ult_step g)) -> well_founded (ult_step g).
+Lemma wf_rel_step : forall g,
+  well_founded (Basics.flip (rel_step g)) -> well_founded (rel_step g).
 Proof.
 intros g Hr u; specialize (Hr u); revert u Hr.
 *)

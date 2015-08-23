@@ -48,7 +48,7 @@ refine (
   )
   u
 ).
-+ eapply ult_step_eq, rw; reflexivity.
++ eapply rel_step_eq, rw; reflexivity.
 + remember ans as elt; destruct elt as [v|].
   - apply UMap.find_2; symmetry; assumption.
   - trivial.
@@ -95,8 +95,8 @@ destruct elt as [[n|v]|]; intros p.
 + exists u; [|assumption].
   reflexivity.
 + refine (let IH := IH v _ _ in _); [| |clearbody IH].
-  { eapply ult_step_eq; intuition eauto. }
-  { eapply ult_complete, ult_step_eq; intuition eauto. }
+  { eapply rel_step_eq; intuition eauto. }
+  { eapply ult_complete, rel_step_eq; intuition eauto. }
   destruct IH as [w HR Hw].
   exists w; [|assumption].
   transitivity v; [|assumption].
@@ -161,7 +161,7 @@ with
     n_nodes := N.succ g.(n_nodes);
     n_edges := g.(n_edges)
   |} in
-  let Hltu : forall v, ~ ult_step g.(entries) u v := _ in
+  let Hltu : forall v, ~ rel_step g.(entries) u v := _ in
   ({| ugraph := g |}, can)
 | Some (Equiv v) => fun rw => (g, repr g v)
 | Some (Canonical c) => fun _ => (g, c)
@@ -186,10 +186,10 @@ destruct (Level.eq_dec u v) as [Hrw|Hd].
 + apply IH; clear - Hw Hd.
   destruct Hw as [n Hv Hw|z Heq Hv].
   { apply UMap.add_3 in Hv; [|assumption].
-    eapply ult_step_lt; eassumption.
+    eapply rel_step_lt; eassumption.
   }
   { apply UMap.add_3 in Hv; [|assumption].
-    eapply ult_step_eq; eassumption.
+    eapply rel_step_eq; eassumption.
   }
 Qed.
 
@@ -203,8 +203,8 @@ destruct (Level.eq_dec u w) as [Hrw|Hd].
   { intros Hrw; eelim Hltu; rewrite Hrw; eassumption. }
   apply g.(ult_complete) with v.
   destruct Hlt.
-  { eapply ult_step_lt; [|eassumption]; eapply UMap.add_3 in H; eassumption. }
-  { eapply ult_step_eq; [eassumption|]; eapply UMap.add_3 in H0; eassumption. }
+  { eapply rel_step_lt; [|eassumption]; eapply UMap.add_3 in H; eassumption. }
+  { eapply rel_step_eq; [eassumption|]; eapply UMap.add_3 in H0; eassumption. }
 Qed.
 
 Next Obligation.
@@ -227,7 +227,7 @@ destruct (Level.eq_dec u v) as [Hrw|Hd].
   { eapply UMap.add_3 in Hv; eassumption. }
   assert (Hw' : ~ Level.eq u w).
   { intros Hrw; rewrite <- Hrw in *; clear w Hrw.
-    elim rw; eapply g.(ult_complete), ult_step_lt; eauto. }
+    elim rw; eapply g.(ult_complete), rel_step_lt; eauto. }
   apply (g.(unv_topo_rel) v w); try assumption.
   destruct Hr as [z Hz Hr]; apply eq_alt_iff in Hz.
   assert (Hc : ~ Level.eq u z).
