@@ -363,9 +363,9 @@ let ans :=
         match UMap.find u g with
         | None => inl (_, exist _ (UMap.add u true seen) _)
         | Some (Equiv v) =>
-          (decide_acc (pred size) _ v seen _ _ _ >>= fun ans =>
+          decide_acc (pred size) _ v seen _ _ _ >>= fun ans =>
 (*           let '(prf, seen) := ans in *)
-          inl (_, exist _ (UMap.add u true _) _))
+          inl (_, exist _ (UMap.add u true _) _)
         | Some (Canonical n) => _
         end
       | Some false => inl _
