@@ -87,9 +87,9 @@ Record Repr g u n : Prop :=  {
 
 Record Universes := {
   ugraph :> universes;
-  ult_trans_wf :
+  rel_trans_wf :
     well_founded (Basics.flip (rel_step ugraph.(entries)));
-  ult_complete : forall u v,
+  rel_complete : forall u v,
     rel_step ugraph.(entries) u v -> UMap.In v ugraph.(entries);
   ueq_canonical : forall u n,
     UMap.MapsTo u (Canonical n) ugraph.(entries) -> Level.eq u n.(univ);

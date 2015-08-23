@@ -32,7 +32,7 @@ Definition tip g u :=
 Definition repr (g : Universes) (u : Level.t) : canonical_node.
 Proof.
 refine (
-  Fix g.(ult_trans_wf) (fun u => _)
+  Fix g.(rel_trans_wf) (fun u => _)
   (fun u repr =>
     let ans := UMap.find u g.(entries) in
     match ans as elt return
@@ -96,7 +96,7 @@ destruct elt as [[n|v]|]; intros p.
   reflexivity.
 + refine (let IH := IH v _ _ in _); [| |clearbody IH].
   { eapply rel_step_eq; intuition eauto. }
-  { eapply ult_complete, rel_step_eq; intuition eauto. }
+  { eapply rel_complete, rel_step_eq; intuition eauto. }
   destruct IH as [w HR Hw].
   exists w; [|assumption].
   transitivity v; [|assumption].
@@ -178,7 +178,7 @@ Qed.
 
 Next Obligation.
 intros g u ? ? ? g0 ?.
-assert (Hwf := g.(ult_trans_wf)).
+assert (Hwf := g.(rel_trans_wf)).
 unfold g0 in *; cbn; clear g0; intros v.
 specialize (Hwf v); induction Hwf as [v Hv IH]; constructor; intros w Hw.
 destruct (Level.eq_dec u v) as [Hrw|Hd].
@@ -201,7 +201,7 @@ destruct (Level.eq_dec u w) as [Hrw|Hd].
 + apply F.add_neq_in_iff; [assumption|].
   assert (Hc : ~ Level.eq u v).
   { intros Hrw; eelim Hltu; rewrite Hrw; eassumption. }
-  apply g.(ult_complete) with v.
+  apply g.(rel_complete) with v.
   destruct Hlt.
   { eapply rel_step_lt; [|eassumption]; eapply UMap.add_3 in H; eassumption. }
   { eapply rel_step_eq; [eassumption|]; eapply UMap.add_3 in H0; eassumption. }
@@ -227,7 +227,7 @@ destruct (Level.eq_dec u v) as [Hrw|Hd].
   { eapply UMap.add_3 in Hv; eassumption. }
   assert (Hw' : ~ Level.eq u w).
   { intros Hrw; rewrite <- Hrw in *; clear w Hrw.
-    elim rw; eapply g.(ult_complete), rel_step_lt; eauto. }
+    elim rw; eapply g.(rel_complete), rel_step_lt; eauto. }
   apply (g.(unv_topo_rel) v w); try assumption.
   destruct Hr as [z Hz Hr]; apply eq_alt_iff in Hz.
   assert (Hc : ~ Level.eq u z).
@@ -480,7 +480,7 @@ Fix N.lt_wf_0 (fun count => btT (N.succ count) -> _ -> _ -> btT count + Universe
 Qed.
 
 Program Definition forward_traverse (g : Universes) (lvl : N) (n : canonical_node) (u : Level.t) : (list Level.t * Universes) :=
-Fix g.(ult_trans_wf) (fun u => _ )
+Fix g.(rel_trans_wf) (fun u => _ )
   (fun u traverse n traversed =>
     let m := repr g u in
     match (m.(klvl) ?= lvl)%N with
