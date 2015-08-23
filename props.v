@@ -68,7 +68,7 @@ intros A R1 R2 R HR HR1 HR2.
 eapply proper_sym_impl_iff_2; [now eauto|now eauto|].
 intros x1 x2 Hx y1 y2 Hy [z [H1 H2]].
 exists z; split.
-+ rewrite <- Hx, <- Hy; assumption.
++ rewrite <- Hx; assumption.
 + rewrite <- Hy; assumption.
 Qed.
 
@@ -86,11 +86,29 @@ Proof.
 intros g u v H; apply rst_step; right; assumption.
 Qed.
 
+Instance Proper_le : forall g, Proper (Rel.eq g ==> Rel.eq g ==> iff) (Rel.le g).
+Proof.
+intros g.
+eapply proper_sym_impl_iff_2; [now eauto|now eauto|].
+intros u1 u2 Hu v1 v2 Hv [H|H].
++ left; rewrite <- Hu, <- Hv; assumption.
++ right; apply clos_trans_t1n_iff in H; apply clos_trans_t1n_iff.
+  revert u2 v2 Hu Hv; induction H as [u1 v1 H|u1 w1 v1 H _ IH]; intros u2 v2 Hu Hv.
+  - left; destruct H as [w [[z [Hzl Hzr]] Hwr]].
+    rewrite Hu in Hzl; clear u1 Hu.
+    exists w; split; [|rewrite Hwr; assumption].
+    exists z; split; [assumption|assumption].
+  - eright; [|apply IH; [reflexivity|assumption]].
+    
+
+Qed.
+
 Instance PreOrder_le : forall g, PreOrder (Rel.le g).
 Proof.
 intros g; split.
 + intros u; left; reflexivity.
-+ intros u v w Hl Hr; right.
++ intros u v w [Hl|Hl] [Hr|Hr].
+  + left.
 
 
 Lemma eq_alt_iff : forall g u v,
