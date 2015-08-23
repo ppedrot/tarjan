@@ -110,8 +110,11 @@ Proof.
 intros g; split.
 + intros u; left; reflexivity.
 + intros u v w [Hl|Hl] [Hr|Hr].
-  + left.
-
+  - rewrite Hl, Hr; left; reflexivity.
+  - rewrite Hl; right; assumption.
+  - rewrite <- Hr; right; assumption.
+  - right; eapply t_trans; eassumption.
+Qed.
 
 Lemma eq_alt_iff : forall g u v,
   Rel.eq g u v <-> (Level.eq u v \/ clos_refl_sym_trans _ (ueq_step g) u v).
