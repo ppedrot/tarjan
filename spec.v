@@ -75,6 +75,9 @@ Module Rel.
 Definition eq g (u v : Level.t) :=
   clos_refl_sym_trans _ (relation_disjunction (ueq_step g) Level.eq) u v.
 
+Definition le g (u v : Level.t) :=
+  clos_refl_trans _ (relation_disjunction (eq g) (ule_step g)) u v.
+
 End Rel.
 
 Record Repr g u n : Prop :=  {
