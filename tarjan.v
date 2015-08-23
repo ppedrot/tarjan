@@ -524,6 +524,18 @@ Admitted.
 Next Obligation.
 Admitted.
 
+Program Definition find_to_merge (g : Universes) u (v : Level.t) : bool * UMap.t _ :=
+Fix g.(rel_trans_wf) (fun u => _ -> _)
+  (fun u find_to_merge status =>
+    let n := repr g u in
+    match UMap.find n.(univ) status return _ with
+    | None => _
+    | Some false => (false, status)
+    | Some true => (true, status)
+    end
+  )
+  u (UMap.empty _).
+
 (*
 let rec find_to_merge to_revert g x v =
   let x = repr g x in
