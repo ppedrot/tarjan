@@ -16,7 +16,6 @@ Module Univ
 
 Module Import USetFacts := FSetFacts.WFacts_fun(Level)(USet).
 Module Import UMapFacts := FMapFacts.WProperties_fun(Level)(UMap).
-Module Import Spec := spec.Spec(Level)(UMap)(USet).
 Module Import Props := props.Props(Level)(UMap)(USet).
 
 Inductive status := Visited | WeakVisited | ToMerge.

@@ -10,7 +10,7 @@ Module Props
 
 Module Import USetFacts := FSetFacts.WFacts_fun(Level)(USet).
 Module Import UMapFacts := FMapFacts.WProperties_fun(Level)(UMap).
-Module Import Spec := spec.Spec(Level)(UMap)(USet).
+Module Export Spec := spec.Spec(Level)(UMap)(USet).
 
 Instance Proper_ueq_step : forall g, Proper (Level.eq ==> Level.eq ==> iff) (ueq_step g).
 Proof.
