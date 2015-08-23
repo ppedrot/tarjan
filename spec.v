@@ -48,10 +48,6 @@ Inductive ule_step g (u : Level.t) (v : Level.t) : Prop :=
 | ule_step_le : forall n,
   UMap.MapsTo u (Canonical n) g ->
   UMap.MapsTo v false n.(ltle) ->
-  ule_step g u v
-| ule_step_eq : forall w,
-  Level.eq v w ->
-  UMap.MapsTo u (Equiv w) g ->
   ule_step g u v.
 
 Inductive rel_step g (u : Level.t) (v : Level.t) : Prop :=

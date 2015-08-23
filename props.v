@@ -26,7 +26,6 @@ intros g; eapply proper_sym_impl_iff_2; [now eauto|now eauto|].
 intros u1 u2 Hu v1 v2 Hv Hrw.
 destruct Hrw.
 + rewrite Hu, Hv in *; eapply ule_step_le; eassumption.
-+ rewrite Hu, Hv in *; eapply ule_step_eq; eassumption.
 Qed.
 
 Instance Proper_rel_step : forall g, Proper (Level.eq ==> Level.eq ==> iff) (rel_step g).
