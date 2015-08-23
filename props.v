@@ -345,12 +345,13 @@ Qed.
 
 Program Definition decide_acc g u :
   {Acc (rel_step g) u} + {clos_trans _ (rel_step g) u u} :=
+
 Fix (Wf_nat.lt_wf) (fun size => _)
-  (fun n decide_acc u seen =>
+  (fun n decide_acc u seen (_ : n = UMap.cardinal g - USet.cardinal seen) =>
     if USet.mem u seen then _
     else _
   )
-  (UMap.cardinal g) u USet.empty.
+  (UMap.cardinal g) u USet.empty _.
 .
 
 Lemma decide_wf : forall g, 
