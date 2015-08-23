@@ -652,13 +652,7 @@ if chg then
     klvl := n.(klvl);
     ilvl := n.(ilvl)
   |} in
-  let g := {|
-    entries := UMap.add n.(univ) (Canonical n) g.(entries);
-    index := g.(index);
-    n_nodes := g.(n_nodes);
-    n_edges := g.(n_edges)
-  |} in
-  (ans, n, {| ugraph := g |})
+  (ans, n, {| ugraph := change_node g n |})
 else (n.(gtge), n, g)
 .
 Next Obligation.
