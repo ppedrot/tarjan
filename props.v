@@ -355,14 +355,14 @@ let ans :=
       (forall u, UMap.MapsTo u true seen -> Acc (rel_step g) u) ->
       (((Acc (rel_step g) u) * {m : UMap.t bool | True}) + {v | clos_trans _ (rel_step g) v v})
     )
-    (fun n decide_acc u seen Hrw Hseen =>
+    (fun size decide_acc u seen Hrw Hseen =>
       match UMap.find u seen with
       | None =>
         let seen := UMap.add u false seen in
         match UMap.find u g with
         | None => inl (_, exist _ (UMap.add u true seen) _)
-        | Some (Equiv v) => _
-(*           decide_acc _ _ v seen _ _ >>= fun ans => *)
+        | Some (Equiv v) =>
+          decide_acc (pred size) _ v seen _ _ >>= fun ans => _
 (*           let '(prf, seen) := ans in *)
 (*           inl (_, exist _ (UMap.add u true seen) _) *)
         | Some (Canonical n) => _
