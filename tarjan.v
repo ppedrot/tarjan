@@ -531,6 +531,7 @@ Admitted.
 Next Obligation.
 Admitted.
 
+(*
 let rec find_to_merge to_revert g x v =
   let x = repr g x in
   match x.status with
@@ -550,6 +551,7 @@ let rec find_to_merge to_revert g x v =
         merge, to_revert
       end
   | _ -> assert false
+*)
 
 End Univ.
 
