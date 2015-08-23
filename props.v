@@ -346,22 +346,25 @@ Qed.
 Program Definition decide_acc g u :
   (Acc (rel_step g) u) + {v | clos_trans _ (rel_step g) v v} :=
 
-Fix (Wf_nat.lt_wf)
-  (fun size => forall u seen,
-    size = UMap.cardinal g - UMap.cardinal seen ->
-    (forall u, UMap.MapsTo u true seen -> Acc (rel_step g) u) ->
-    ((Acc (rel_step g) u) + {v | clos_trans _ (rel_step g) v v})
-  )
-  (fun n decide_acc u seen Hrw Hseen =>
-    match UMap.find u seen with
-    | None => _
-    | Some false =>
-      let seen := UMap.add u true seen in
-      _
-    | Some true => _
-    end
-  )
-  (UMap.cardinal g) u (UMap.empty bool) _ _.
+let ans :=
+  Fix (Wf_nat.lt_wf)
+    (fun size => forall u seen,
+      size = UMap.cardinal g - UMap.cardinal seen ->
+      (forall u, UMap.MapsTo u true seen -> Acc (rel_step g) u) ->
+      ((Acc (rel_step g) u) + {v | clos_trans _ (rel_step g) v v}) * {m : UMap.t bool | True}
+    )
+    (fun n decide_acc u seen Hrw Hseen =>
+      match UMap.find u seen with
+      | None => _
+      | Some false =>
+        let seen := UMap.add u true seen in
+        _
+      | Some true => _
+      end
+    )
+    (UMap.cardinal g) u (UMap.empty bool) _ _
+in
+fst ans.
 Next Obligation.
 intros.
 .
