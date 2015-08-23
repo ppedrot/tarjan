@@ -273,13 +273,13 @@ Qed.
 
 Lemma exists_extract : forall elt (f : Level.t -> elt -> bool) m,
   Proper (Level.eq ==> eq ==> eq) f ->
-  (exists k e, f k e = true /\ UMap.MapsTo k e m) ->
+  (exists p, UMap.MapsTo (fst p) (snd p) m /\ f (fst p) (snd p) = true) ->
   {p | match p with (k, e) => f k e = true /\ UMap.MapsTo k e m end}.
 Proof.
 intros elt f m Hf.
 pattern m; apply map_induction; clear - Hf.
 + intros m Hm H; exfalso.
-  destruct H as [k [e [_ H]]].
+  destruct H as [[k e] [H _]].
   eelim Hm; eassumption.
 + intros m1 m2 IH k e Hk Ha HS.
   remember (f k e) as b; destruct b.
@@ -287,12 +287,12 @@ pattern m; apply map_induction; clear - Hf.
     apply F.find_mapsto_iff; rewrite Ha.
     apply UMapFacts.F.add_eq_o; reflexivity.
   - destruct IH as [[k' e'] [Hb Hm1]].
-    { destruct HS as [k' [e' [Heq Hm]]].
-      exists k' e'; split; [assumption|].
+    { destruct HS as [[k' e'] [Hm Heq]].
+      exists (k', e'); split; [|assumption].
       assert (Hd : ~ Level.eq k k').
       { intros Hc; rewrite <- Hc in *.
         specialize (Ha k); rewrite UMapFacts.F.add_eq_o in Ha; [|reflexivity].
-        apply UMap.find_1 in Hm; congruence.
+        cbn in *; apply UMap.find_1 in Hm; congruence.
       }
       eapply UMap.add_3; [eassumption|].
       rewrite F.add_neq_mapsto_iff; [|eassumption].
@@ -312,16 +312,22 @@ Qed.
 Lemma is_rel_source : forall g u, {v | rel_step g v u} + {forall v, ~ rel_step g u v}.
 Proof.
 intros g u.
-pose (b := UMapFacts.exists_ (fun v _ => if rel_step_dec g u v then true else false) g).
-assert (Hf : Proper (Level.eq ==> eq ==> eq) (fun v (_ : univ_entry) => if rel_step_dec g u v then true else false)).
+pose (b := UMapFacts.exists_ (fun v _ => if rel_step_dec g v u then true else false) g).
+assert (Hf : Proper (Level.eq ==> eq ==> eq) (fun v (_ : univ_entry) => if rel_step_dec g v u then true else false)).
 {
   clear; intros v1 v2 Hv b ? <-.
   destruct rel_step_dec as [Hl|Hl];
   destruct rel_step_dec as [Hr|Hr]; trivial; exfalso;
   rewrite <- Hv in Hr; contradiction.
 }
-remember b as ex; destruct ex.
-+ symmetry in Heqex; apply exists_iff in Heqex.
+remember b as ex; destruct ex; symmetry in Heqex.
++ apply exists_iff in Heqex; [|assumption].
+  refine (let He := exists_extract _ _ _ _ Heqex in _); clearbody He; clear Heqex.
+  destruct He as [[v ?] [Heq Hm]].
+  destruct rel_step_dec; [|congruence].
+  left; exists v; assumption.
++ right; intros v Hv.
+Qed.
 
 Lemma ill_founded_has_cycle : forall g,
   ~ well_founded (rel_step g) -> {u | clos_trans _ (rel_step g) u u}.
