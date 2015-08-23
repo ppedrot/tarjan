@@ -59,6 +59,20 @@ revert x2 Hx y2 Hy; induction Hr; intros x2 Hx y2 Hy.
 + eapply t_trans; [eapply IHHr1|eapply IHHr2]; (eassumption || reflexivity).
 Qed.
 
+Instance Proper_compose : forall A (R1 R2 : relation A) R,
+  Equivalence R ->
+  Proper (R ==> R ==> iff) R1 ->
+  Proper (R ==> R ==> iff) R2 ->
+  Proper (R ==> R ==> iff) (Rel.compose R1 R2).
+Proof.
+intros A R1 R2 R HR HR1 HR2.
+eapply proper_sym_impl_iff_2; [now eauto|now eauto|].
+intros x1 x2 Hx y1 y2 Hy [z [H1 H2]].
+exists z; split.
++ rewrite <- Hx, <- Hy; assumption.
++ rewrite <- Hy; assumption.
+Qed.
+
 Instance Equivalence_eq : forall g, Equivalence (Rel.eq g).
 Proof.
 intros g.
