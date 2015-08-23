@@ -271,10 +271,51 @@ remember (UMap.find u g) as elt; destruct elt as [[n|w]|].
   destruct Hc as [w H|w Heq H]; apply F.find_mapsto_iff in H; congruence.
 Qed.
 
+Lemma exists_extract : forall elt (f : Level.t -> elt -> bool) m,
+  Proper (Level.eq ==> eq ==> eq) f ->
+  (exists k e, f k e = true /\ UMap.MapsTo k e m) ->
+  {p | match p with (k, e) => f k e = true /\ UMap.MapsTo k e m end}.
+Proof.
+intros elt f m Hf.
+pattern m; apply map_induction; clear - Hf.
++ intros m Hm H; exfalso.
+  destruct H as [k [e [_ H]]].
+  eelim Hm; eassumption.
++ intros m1 m2 IH k e Hk Ha HS.
+  remember (f k e) as b; destruct b.
+  - exists (k, e); split; [now intuition|].
+    apply F.find_mapsto_iff; rewrite Ha.
+    apply UMapFacts.F.add_eq_o; reflexivity.
+  - destruct IH as [[k' e'] [Hb Hm1]].
+    { destruct HS as [k' [e' [Heq Hm]]].
+      exists k' e'; split; [assumption|].
+      assert (Hd : ~ Level.eq k k').
+      { intros Hc; rewrite <- Hc in *.
+        specialize (Ha k); rewrite UMapFacts.F.add_eq_o in Ha; [|reflexivity].
+        apply UMap.find_1 in Hm; congruence.
+      }
+      eapply UMap.add_3; [eassumption|].
+      rewrite F.add_neq_mapsto_iff; [|eassumption].
+      erewrite F.find_mapsto_iff, <- F.add_neq_o, <- Ha; [|eassumption].
+      rewrite <- F.find_mapsto_iff; assumption.
+    }
+    exists (k', e'); split; [assumption|].
+    
+Qed.
+
+
+Lemma is_rel_source : forall g u, {v | rel_step g v u} + {forall v, ~ rel_step g u v}.
+Proof.
+intros g u.
+pose (b := UMapFacts.exists_ (fun v _ => if rel_step_dec g u v then true else false) g).
+remember b as ex; destruct ex.
++ 
+
 Lemma ill_founded_has_cycle : forall g,
   ~ well_founded (rel_step g) -> {u | clos_trans _ (rel_step g) u u}.
 Proof.
-
+intros g Hg.
+pose (is_source := fun u => )
 
 (*
 Lemma rel_step_dec_l : forall g u, {v | rel_step g u v} + {forall v, ~ rel_step g u v}.
