@@ -771,7 +771,12 @@ Fix g.(ult_trans_wf) (fun u => _ )
     | Lt =>
       let gtge := if Level.eq_dec n.(univ) m.(univ) then USet.empty else USet.singleton n.(univ) in
       let '(ltle, m, g) := get_ltle g m _ in
-      _
+      let fold v _ accu :=
+        let '(traversed, g) := accu in
+        traverse v _ m traversed
+      in
+      let '(traversed, g) := UMap.fold fold ltle (traversed, g) in
+      (cons n.(univ) traversed, g)
     | Eq =>
       if Level.eq_dec n.(univ) m.(univ) then (traversed, g)
       else
@@ -783,7 +788,8 @@ Fix g.(ult_trans_wf) (fun u => _ )
           klvl := m.(klvl);
           ilvl := m.(ilvl)
         |} in
-        _
+        let g := change_node g m in
+        (traversed, {| ugraph := g |})
     | Gt => (traversed, g)
     end
   )
@@ -795,27 +801,12 @@ Next Obligation.
 Admitted.
 Next Obligation.
 Admitted.
-
-let rec forward_traverse f_traversed g v_klvl x y =
-  let y = repr g y in
-  if y.klvl < v_klvl then begin
-    let y = { y with klvl = v_klvl;
-                      gtge = if x == y then LSet.empty
-                            else LSet.singleton x.univ }
-    in
-    let g = change_node g y in
-    let ltle, y, g = get_ltle g y in
-    let f_traversed, g =
-      LMap.fold (fun z _ (f_traversed, g) ->
-        forward_traverse f_traversed g v_klvl y z)
-      ltle (f_traversed, g)
-    in
-    y.univ::f_traversed, g
-    end else if y.klvl = v_klvl && x != y then
-      let g = change_node g
-        { y with gtge = LSet.add x.univ y.gtge } in
-      f_traversed, g
-    else f_traversed, g
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
 
 End Univ.
 
