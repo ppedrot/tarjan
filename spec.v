@@ -79,11 +79,9 @@ Definition eq g (u v : Level.t) :=
   clos_refl_sym_trans _ (relation_disjunction (ueq_step g) Level.eq) u v.
 
 Definition le g (u v : Level.t) :=
-  eq g u v \/ clos_trans _ (compose (eq g) (ule_step g)) u v.
+  eq g u v \/ clos_trans _ (compose (compose (eq g) (ule_step g)) (eq g)) u v.
 
 End Rel.
-
-Notation "R1 * R2" := (compose R1 R2).
 
 Record Repr g u n : Prop :=  {
   Repr_wit : Level.t;
