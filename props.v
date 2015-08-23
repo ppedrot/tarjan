@@ -349,7 +349,8 @@ Program Definition decide_acc g u :
 let P u := ((Acc (rel_step g) u) + {v | clos_trans _ (rel_step g) v v})%type in
 Fix (Wf_nat.lt_wf)
   (fun size => forall v seen,
-    size = UMap.cardinal g - USet.cardinal seen -> P u
+    size = UMap.cardinal g - USet.cardinal seen ->
+    P u
   )
   (fun n decide_acc u seen Hrw =>
     if USet.mem u seen then _
