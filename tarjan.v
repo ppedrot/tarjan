@@ -597,18 +597,6 @@ unfold clean_ltle; apply fold_rec; cbn in *.
     intros [? ?]; eelim Hm; eassumption.
 + intros u b [accu chg] m1 m2 Hu Hm1 Hm2 Hspec; cbn in *; split.
   - intros v Hv.
-    apply F.find_in_iff in Hv.
-    rewrite (Hm2 _) in Hv.
-    apply F.find_mapsto_iff in Hv; apply F.add_mapsto_iff in Hv.
-    destruct Hv as [Hv|Hv].
-    { exists (univ (repr g u)); split.
-      + apply F.add_mapsto_iff; left; intuition.
-      + rewrite <- (proj1 Hv); apply repr_rel_eq; apply p; eexists; eassumption.
-    }
-    { eapply cltle_l in Hspec; [|now intuition eauto].
-      destruct Hspec as [w Hw]; exists w.
-      split; [|now intuition].
-      apply F.add_mapsto_iff.
 Admitted.
 
 
