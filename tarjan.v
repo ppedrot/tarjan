@@ -528,7 +528,7 @@ Program Definition find_to_merge (g : Universes) u (v : Level.t) : bool * UMap.t
 Fix g.(rel_trans_wf) (fun u => _ -> _)
   (fun u find_to_merge status =>
     let n := repr g u in
-    match UMap.find n.(univ) status return _ with
+    match UMap.find n.(univ) status with
     | None =>
       if Level.eq_dec n.(univ) v then (true, UMap.add n.(univ) true status)
       else
@@ -544,6 +544,9 @@ Fix g.(rel_trans_wf) (fun u => _ -> _)
     end
   )
   u (UMap.empty _).
+Next Obligation.
+intros g _ v u _ status n elt Helt Hd w [merge accu] _ _ _.
+Admitted.
 
 End Univ.
 

@@ -2,6 +2,8 @@ Require FSets FMaps NArith Wellfounded.
 Require Import Program Setoid Morphisms BinNat Relations.
 Require Tarjan.spec.
 
+Obligation Tactic := idtac.
+
 Module Props
   (Level : OrderedType.OrderedType)
   (UMap : FMapInterface.Sfun(Level))
@@ -10,6 +12,31 @@ Module Props
 
 Module Import USetFacts := FSetFacts.WFacts_fun(Level)(USet).
 Module Import UMapFacts := FMapFacts.WProperties_fun(Level)(UMap).
+
+Fixpoint for_all {A} (P : A -> Prop) (l : list A) : Prop :=
+match l with
+| nil => True
+| cons x l => P x /\ for_all P l
+end.
+
+Program Definition fold_strong {elt A} (m : UMap.t elt)
+  (f : forall (k : Level.t) (e : elt), UMap.MapsTo k e m -> A -> A) (accu : A) : A :=
+(fix fold_strong l accu :=
+match l return for_all (fun p => UMap.MapsTo (fst p) (snd p) m) l -> A with
+| nil => fun _ => accu
+| cons (k, e) l => fun p => fold_strong l (f k e (proj1 p) accu) (proj2 p)
+end) (UMap.elements m) accu _.
+Next Obligation.
+intros elt A m _ _.
+assert (H := @UMap.elements_2 _ m).
+set (l := UMap.elements m) in *; clearbody l; induction l as [|[k e] l]; cbn.
++ trivial.
++ split.
+  - apply H, SetoidList.InA_cons_hd; reflexivity.
+  - apply IHl; clear - H; intros k' e' Hm.
+    apply H, SetoidList.InA_cons_tl; assumption.
+Qed.
+
 Module Export Spec := spec.Spec(Level)(UMap)(USet).
 
 Instance Proper_ueq_step : forall g, Proper (Level.eq ==> Level.eq ==> iff) (ueq_step g).
