@@ -353,7 +353,6 @@ let ans :=
     (fun size => forall u seen,
       size = UMap.cardinal g - UMap.cardinal seen ->
       (forall v (b : bool), UMap.MapsTo v b seen -> if b then Acc (rel_step g) v else clos_trans _ (rel_step g) v u) ->
-(*       (forall v, UMap.MapsTo v false seen -> clos_trans _ (rel_step g) v u) -> *)
       (((Acc (rel_step g) u) * {m : UMap.t bool | True}) + {v | clos_trans _ (rel_step g) v v})
     )
     (fun size decide_acc u seen Hrw Hseen =>
@@ -367,7 +366,7 @@ let ans :=
 (*           let '(prf, seen) := ans in *)
           inl (_, exist _ (UMap.add u true _) _)
         | Some (Canonical n) =>
-          UMap.fold _ n.(ltle) _
+          UMap.fold (fun v ans => _) n.(ltle) _
         end
       | Some false => inl _
       | Some true => inr (exist _ u _)
