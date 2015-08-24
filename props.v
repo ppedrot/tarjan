@@ -370,7 +370,7 @@ let ans :=
           UMap.fold _ n.(ltle) _
         end
       | Some false => inl _
-      | Some true => inr _
+      | Some true => inr (exist _ u _)
       end
     )
     (UMap.cardinal g) u (UMap.empty bool) _ _
