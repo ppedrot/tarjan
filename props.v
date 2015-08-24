@@ -343,7 +343,99 @@ induction Heq; [apply t_step|eapply t_trans; eassumption].
 apply HR; assumption.
 Qed.
 
+Section Decide_acc.
+
 Notation "t >>= u" := (match t with inl x => u x | inr y => inr y end) (at level 45, u at level 200, right associativity).
+
+Variable f : Level.t -> Level.t -> bool.
+Hypothesis Proper_f : Proper (Level.eq ==> Level.eq ==> eq) f.
+Let R {elt} (g : UMap.t elt) := fun u v => f u v = true /\ UMap.In u g /\ UMap.In v g.
+
+Program Definition decide_acc {elt} (g : UMap.t elt) u :
+  (Acc (R g) u) + {v | clos_trans _ (R g) v v} :=
+
+let P seen u :=
+  forall v (b : bool), UMap.MapsTo v b seen ->
+  (Acc (R g) u) + {v | clos_trans _ (R g) v v}
+in
+let ans :=
+  Fix (Wf_nat.lt_wf)
+    (fun size => forall u seen,
+      size = UMap.cardinal g - UMap.cardinal seen ->
+      P seen u ->
+      ({seen | UMap.MapsTo u true seen /\ P seen u} + {v | clos_trans _ (rel_step g) v v})
+    )
+    (fun size decide_acc u seen Hrw Hseen =>
+      match UMap.find u seen with
+      | None =>
+        let seen' := UMap.add u false seen in
+        match UMap.find u g with
+        | None => inl (exist _ (UMap.add u true seen') _)
+        | Some (Equiv v) =>
+          decide_acc (pred size) _ v seen' _ _ >>= fun ans =>
+(*           let '(prf, seen) := ans in *)
+          inl (exist _ (UMap.add u true _) _)
+        | Some (Canonical n) =>
+          let fold v b p (ans' : {seen_ | P seen u} + _) :=
+            ans' >>= fun ans'' => _
+(*             decide_acc (pred size) _ v seen _ _ >>= fun ans => *)
+          in
+          let seen'' := map_fold_strong n.(ltle) fold (inl seen') in
+          seen'' >>= fun ans'' => inl (exist _ ans'' _)
+        end
+      | Some false => inl (exist _ seen _)
+      | Some true => inr (exist _ u _)
+      end
+    )
+    (UMap.cardinal g) u (UMap.empty bool) _ _
+in
+match ans with inl seen => inl _ | inr cycle => inr cycle end.
+Next Obligation.
+intros g _ P size _ u seen _ Hseen elt H seen' elt' Hu; cbn; split.
++ apply UMap.add_1; reflexivity.
++ symmetry in Hu; apply F.not_find_in_iff in Hu.
+  intros v b Hv; apply F.add_mapsto_iff in Hv. destruct Hv as [[Hv]|[Heq Hv]].
+  - destruct b; [|now intuition]; rewrite <- Hv.
+    constructor; intros w Hw; elim Hu.
+    destruct Hw; eexists; eassumption.
+  - apply UMap.add_3 in Hv; [|assumption].
+    apply Hseen; assumption.
+Qed.
+Next Obligation.
+intros; cbn.
+intros v b Hv; apply F.add_mapsto_iff in Hv. destruct Hv as [[Hv]|[Heq Hv]].
++ destruct b; [|now intuition]; rewrite <- Hv.
+  
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+intros g _.
+rewrite (@UMapFacts.cardinal_1 _ (UMap.empty _)); [omega|apply UMap.empty_1].
+Qed.
+Next Obligation.
+intros g u v b He; exfalso.
+apply UMapFacts.F.empty_mapsto_iff in He; assumption.
+Qed.
+
 
 Program Definition decide_acc g u :
   (Acc (flip (rel_step g)) u) + {v | clos_trans _ (rel_step g) v v} :=
