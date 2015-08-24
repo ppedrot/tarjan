@@ -393,7 +393,8 @@ intros g _ P size _ u seen _ Hseen elt H seen' elt' Hu; cbn; split.
   - destruct b; [|now intuition]; rewrite <- Hv.
     constructor; intros w Hw; elim Hu.
     destruct Hw; eexists; eassumption.
-  -
+  - apply UMap.add_3 in Hv; [|assumption].
+    apply Hseen; assumption.
 Qed.
 Next Obligation.
 intros; cbn.
