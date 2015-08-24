@@ -403,7 +403,9 @@ Admitted.
 Next Obligation.
 Admitted.
 Next Obligation.
-Admitted.
+intros g u v b He; exfalso.
+apply UMapFacts.F.empty_mapsto_iff in He; assumption.
+Qed.
 
 
 Lemma decide_wf : forall g, 
