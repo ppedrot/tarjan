@@ -362,21 +362,20 @@ let ans :=
     (fun size decide_acc u seen Hrw Hseen =>
       match UMap.find u seen with
       | None =>
-        let seen := UMap.add u false seen in
+        let seen' := UMap.add u false seen in
         match UMap.find u g with
-        | None => inl (exist _ (UMap.add u true seen) _)
+        | None => inl (exist _ (UMap.add u true seen') _)
         | Some (Equiv v) =>
-          decide_acc (pred size) _ v seen _ _ >>= fun ans =>
+          decide_acc (pred size) _ v seen' _ _ >>= fun ans =>
 (*           let '(prf, seen) := ans in *)
           inl (exist _ (UMap.add u true _) _)
         | Some (Canonical n) =>
-          let fold v b p (ans : {seen | P seen u} + _) :=
-(*             ans >>= fun ans => _ *)
+          let fold v b p (ans' : {seen_ | P seen u} + _) :=
+            ans' >>= fun ans'' => _
 (*             decide_acc (pred size) _ v seen _ _ >>= fun ans => *)
-            _
           in
-          let ans := map_fold_strong n.(ltle) fold (inl seen) in
-          ans >>= fun ans => inl (exist _ seen _)
+          let seen'' := map_fold_strong n.(ltle) fold (inl seen') in
+          seen'' >>= fun ans'' => inl (exist _ ans'' _)
         end
       | Some false => inl (exist _ seen _)
       | Some true => inr (exist _ u _)
