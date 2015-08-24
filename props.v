@@ -366,8 +366,8 @@ let ans :=
 (*           let '(prf, seen) := ans in *)
           inl (_, exist _ (UMap.add u true _) _)
         | Some (Canonical n) =>
-          let fold v _ ans := _ in
-          UMap.fold fold n.(ltle) _
+          let fold v b p ans := _ in
+          map_fold_strong n.(ltle) fold _
         end
       | Some false => inl (_, exist _ seen _)
       | Some true => inr (exist _ u _)
