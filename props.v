@@ -386,7 +386,9 @@ let ans :=
 in
 match ans with inl (prf, _) => inl prf | inr cycle => inr cycle end.
 Next Obligation.
-Admitted.
+intros g _ _ _ _ u _ _ _ _ _ _ ? H.
+intros; constructor; intros.
+Qed.
 Next Obligation.
 Admitted.
 Next Obligation.
