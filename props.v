@@ -401,7 +401,9 @@ Admitted.
 Next Obligation.
 Admitted.
 Next Obligation.
-Admitted.
+intros g _.
+rewrite (@UMapFacts.cardinal_1 _ (UMap.empty _)); [omega|apply UMap.empty_1].
+Qed.
 Next Obligation.
 intros g u v b He; exfalso.
 apply UMapFacts.F.empty_mapsto_iff in He; assumption.
