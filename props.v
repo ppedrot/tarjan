@@ -356,7 +356,7 @@ let ans :=
     (fun size => forall u seen,
       size = UMap.cardinal g - UMap.cardinal seen ->
       P seen u ->
-      (((Acc (rel_step g) u) * {m : UMap.t bool | True}) + {v | clos_trans _ (rel_step g) v v})
+      (((Acc (rel_step g) u) * {seen : UMap.t bool | P seen u}) + {v | clos_trans _ (rel_step g) v v})
     )
     (fun size decide_acc u seen Hrw Hseen =>
       match UMap.find u seen with
