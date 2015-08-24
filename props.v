@@ -345,14 +345,40 @@ Qed.
 
 Section Decide_acc.
 
-Notation "t >>= u" := (match t with inl x => u x | inr y => inr y end) (at level 45, u at level 200, right associativity).
-
+Variable elt : Type.
 Variable f : Level.t -> Level.t -> bool.
-Hypothesis Proper_f : Proper (Level.eq ==> Level.eq ==> eq) f.
-Let R {elt} (g : UMap.t elt) := fun u v => f u v = true /\ UMap.In u g /\ UMap.In v g.
+Variable neighbours : UMap.t elt -> Level.t -> USet.t.
 
-Program Definition decide_acc {elt} (g : UMap.t elt) u :
-  (Acc (R g) u) + {v | clos_trans _ (R g) v v} :=
+Definition decide_acc (g : UMap.t elt) u : bool :=
+fst ((fix F (n : nat) u seen {struct n} :=
+  match n with
+  | 0 => (true, seen)
+  | S n =>
+    match UMap.find u seen with
+    | None =>
+      let seen := UMap.add u false seen in
+      match UMap.find u g with
+      | None =>
+        let seen := UMap.add u true seen in
+        (true, seen)
+      | Some e =>
+        let fold v accu :=
+          let '(ans, seen) := accu in
+          let '(ans', seen) := F n v seen in
+          (andb ans ans', seen)
+        in
+        let '(ans, seen) := USet.fold fold (neighbours g u) (true, seen) in
+        let seen := UMap.add u true seen in
+        (ans, seen)
+      end
+    | Some false => (true, seen)
+    | Some true => (false, seen)
+    end
+  end)
+  (UMap.cardinal g) u (UMap.empty bool)).
+
+Hypothesis Proper_f : Proper (Level.eq ==> Level.eq ==> eq) f.
+Let R {elt} (g : UMap.t elt) := fun u v => f u v = true.
 
 let P seen u :=
   forall v (b : bool), UMap.MapsTo v b seen ->
