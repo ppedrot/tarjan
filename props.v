@@ -377,8 +377,34 @@ let ans :=
 in
 match ans with inl (prf, _) => inl prf | inr cycle => inr cycle end.
 Next Obligation.
-intros.
-.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+Next Obligation.
+Admitted.
+
 
 Lemma decide_wf : forall g, 
 
