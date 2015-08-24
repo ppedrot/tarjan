@@ -368,7 +368,7 @@ let ans :=
         | Some (Canonical n) =>
           UMap.fold (fun v ans => _) n.(ltle) _
         end
-      | Some false => inl _
+      | Some false => inl (_, exist _ seen _)
       | Some true => inr (exist _ u _)
       end
     )
