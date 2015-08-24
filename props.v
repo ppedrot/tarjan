@@ -348,11 +348,14 @@ Notation "t >>= u" := (match t with inl x => u x | inr y => inr y end) (at level
 Program Definition decide_acc g u :
   (Acc (rel_step g) u) + {v | clos_trans _ (rel_step g) v v} :=
 
+let P seen u :=
+  (forall v (b : bool), UMap.MapsTo v b seen -> if b then Acc (rel_step g) v else clos_trans _ (rel_step g) v u)
+in
 let ans :=
   Fix (Wf_nat.lt_wf)
     (fun size => forall u seen,
       size = UMap.cardinal g - UMap.cardinal seen ->
-      (forall v (b : bool), UMap.MapsTo v b seen -> if b then Acc (rel_step g) v else clos_trans _ (rel_step g) v u) ->
+      P seen u ->
       (((Acc (rel_step g) u) * {m : UMap.t bool | True}) + {v | clos_trans _ (rel_step g) v v})
     )
     (fun size decide_acc u seen Hrw Hseen =>
@@ -366,8 +369,13 @@ let ans :=
 (*           let '(prf, seen) := ans in *)
           inl (_, exist _ (UMap.add u true _) _)
         | Some (Canonical n) =>
-          let fold v b p ans := _ in
-          map_fold_strong n.(ltle) fold _
+          let fold v b p (ans : unit + _) :=
+(*             ans >>= fun ans => _ *)
+(*             decide_acc (pred size) _ v seen _ _ >>= fun ans => *)
+            _
+          in
+          let ans := map_fold_strong n.(ltle) fold _ in
+          ans >>= fun ans => _
         end
       | Some false => inl (_, exist _ seen _)
       | Some true => inr (exist _ u _)
