@@ -376,7 +376,7 @@ let ans :=
             _
           in
           let ans := map_fold_strong n.(ltle) fold _ in
-          ans >>= fun ans => _
+          ans >>= fun ans => inl _
         end
       | Some false => inl (_, exist _ seen _)
       | Some true => inr (exist _ u _)
