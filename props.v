@@ -349,7 +349,8 @@ Program Definition decide_acc g u :
   (Acc (rel_step g) u) + {v | clos_trans _ (rel_step g) v v} :=
 
 let P seen u :=
-  (forall v (b : bool), UMap.MapsTo v b seen -> if b then Acc (rel_step g) v else clos_trans _ (rel_step g) v u)
+  forall v (b : bool), UMap.MapsTo v b seen ->
+  if b then Acc (rel_step g) v else clos_trans _ (rel_step g) v u
 in
 let ans :=
   Fix (Wf_nat.lt_wf)
