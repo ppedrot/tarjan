@@ -386,10 +386,14 @@ let ans :=
 in
 match ans with inl seen => inl _ | inr cycle => inr cycle end.
 Next Obligation.
-intros g _ _ _ _ u _ _ _ _ _ _ ? H.
-symmetry in H; apply F.not_find_in_iff in H.
-constructor; intros v Hv.
-destruct Hv as [w Hv _|w _ Hv]; elim H; eexists; eassumption.
+intros g _ P size _ u seen _ Hseen elt H seen' elt' Hu; cbn; split.
++ apply UMap.add_1; reflexivity.
++ symmetry in Hu; apply F.not_find_in_iff in Hu.
+  intros v b Hv; apply F.add_mapsto_iff in Hv. destruct Hv as [[Hv]|[Heq Hv]].
+  - destruct b; [|now intuition]; rewrite <- Hv.
+    constructor; intros w Hw; elim Hu.
+    destruct Hw; eexists; eassumption.
+  -
 Qed.
 Next Obligation.
 intros; cbn.
