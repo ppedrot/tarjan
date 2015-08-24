@@ -357,18 +357,18 @@ let ans :=
     (fun size => forall u seen,
       size = UMap.cardinal g - UMap.cardinal seen ->
       P seen u ->
-      (((Acc (flip (rel_step g)) u) * {seen : UMap.t bool | P seen u}) + {v | clos_trans _ (rel_step g) v v})
+      ({seen : UMap.t bool | UMap.MapsTo u true seen /\ P seen u} + {v | clos_trans _ (rel_step g) v v})
     )
     (fun size decide_acc u seen Hrw Hseen =>
       match UMap.find u seen with
       | None =>
         let seen := UMap.add u false seen in
         match UMap.find u g with
-        | None => inl (_, exist _ (UMap.add u true seen) _)
+        | None => inl (exist _ (UMap.add u true seen) _)
         | Some (Equiv v) =>
           decide_acc (pred size) _ v seen _ _ >>= fun ans =>
 (*           let '(prf, seen) := ans in *)
-          inl (_, exist _ (UMap.add u true _) _)
+          inl (exist _ (UMap.add u true _) _)
         | Some (Canonical n) =>
           let fold v b p (ans : unit + _) :=
 (*             ans >>= fun ans => _ *)
@@ -378,13 +378,13 @@ let ans :=
           let ans := map_fold_strong n.(ltle) fold _ in
           ans >>= fun ans => inl _
         end
-      | Some false => inl (_, exist _ seen _)
+      | Some false => inl (exist _ seen _)
       | Some true => inr (exist _ u _)
       end
     )
     (UMap.cardinal g) u (UMap.empty bool) _ _
 in
-match ans with inl (prf, _) => inl prf | inr cycle => inr cycle end.
+match ans with inl seen => inl _ | inr cycle => inr cycle end.
 Next Obligation.
 intros g _ _ _ _ u _ _ _ _ _ _ ? H.
 symmetry in H; apply F.not_find_in_iff in H.
@@ -392,6 +392,10 @@ constructor; intros v Hv.
 destruct Hv as [w Hv _|w _ Hv]; elim H; eexists; eassumption.
 Qed.
 Next Obligation.
+intros; cbn.
+intros v b Hv; apply F.add_mapsto_iff in Hv. destruct Hv as [[Hv]|[Heq Hv]].
++ destruct b; [|now intuition]; rewrite <- Hv.
+  
 Admitted.
 Next Obligation.
 Admitted.
