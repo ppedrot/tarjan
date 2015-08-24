@@ -346,18 +346,18 @@ Qed.
 Notation "t >>= u" := (match t with inl x => u x | inr y => inr y end) (at level 45, u at level 200, right associativity).
 
 Program Definition decide_acc g u :
-  (Acc (rel_step g) u) + {v | clos_trans _ (rel_step g) v v} :=
+  (Acc (flip (rel_step g)) u) + {v | clos_trans _ (rel_step g) v v} :=
 
 let P seen u :=
   forall v (b : bool), UMap.MapsTo v b seen ->
-  if b then Acc (rel_step g) v else clos_trans _ (rel_step g) v u
+  if b then Acc (flip (rel_step g)) v else clos_trans _ (rel_step g) v u
 in
 let ans :=
   Fix (Wf_nat.lt_wf)
     (fun size => forall u seen,
       size = UMap.cardinal g - UMap.cardinal seen ->
       P seen u ->
-      (((Acc (rel_step g) u) * {seen : UMap.t bool | P seen u}) + {v | clos_trans _ (rel_step g) v v})
+      (((Acc (flip (rel_step g)) u) * {seen : UMap.t bool | P seen u}) + {v | clos_trans _ (rel_step g) v v})
     )
     (fun size decide_acc u seen Hrw Hseen =>
       match UMap.find u seen with
@@ -387,7 +387,9 @@ in
 match ans with inl (prf, _) => inl prf | inr cycle => inr cycle end.
 Next Obligation.
 intros g _ _ _ _ u _ _ _ _ _ _ ? H.
-intros; constructor; intros.
+symmetry in H; apply F.not_find_in_iff in H.
+constructor; intros v Hv.
+destruct Hv as [w Hv _|w _ Hv]; elim H; eexists; eassumption.
 Qed.
 Next Obligation.
 Admitted.
