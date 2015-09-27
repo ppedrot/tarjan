@@ -13,10 +13,14 @@ Let R : relation A := fun x y => SetoidList.InA eq x (f x).
 Variable set : list A.
 Variable set_complete : forall x y, R x y -> SetoidList.InA eq x set.
 
-Variable wf_R : well_founded R.
+Variable wf_R : ~ well_founded R.
 
+(*
 Lemma cycle : {x | Relation_Operators.clos_trans _ R x x}.
 Proof.
+elim wf_R.
+
 Admitted.
+*)
 
 End Wf.

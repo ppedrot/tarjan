@@ -480,10 +480,12 @@ Lemma decide_wf : forall g,
 
 *)
 
+(*
 Lemma ill_founded_has_cycle : forall g,
-  ~ well_founded (rel_step g) -> {u | clos_trans _ (rel_step g) u u}.
+  ~ well_founded (Basics.flip (rel_step g)) -> {u | clos_trans _ (Basics.flip (rel_step g)) u u}.
 Proof.
 intros g Hg.
+unfold flip in *.
 pose (is_source := fun g u (_ : univ_entry) => if is_rel_source g u then true else false).
 assert (Hf : forall g, Proper (Level.eq ==> eq ==> eq) (is_source g)).
 {
@@ -501,12 +503,12 @@ destruct p as [g1 g2].
 remember (UMap.is_empty g1) as b; symmetry in Heqb; destruct b.
 + elim Hg; clear - Hf Heqp Heqb.
   intros u; constructor; intros v Hr; exfalso.
-  assert (Hi : exists c, UMap.MapsTo v c g).
+  assert (Hi : exists c, UMap.MapsTo u c g).
   { destruct Hr; intuition eauto. }
   destruct Hi as [c Hv].
-  assert (H : UMap.MapsTo v c g /\ is_source g v c = true).
+  assert (H : UMap.MapsTo u c g /\ is_source g u c = true).
   { split; [auto|]; unfold is_source; destruct is_rel_source; intuition eauto. }
-  assert (Hp := @partition_iff_1 _ _ (Hf g) g g1 v c).
+  assert (Hp := @partition_iff_1 _ _ (Hf g) g g1 u c).
 
 + assert (Hlt : (UMap.cardinal g1) <> 0).
   { intros Heq; rewrite <- UMapFacts.cardinal_Empty in Heq.
