@@ -2,6 +2,9 @@ Require FSets FMaps NArith Wellfounded.
 Require Import Program Setoid Morphisms BinNat Relations Omega.
 Require Tarjan.spec.
 
+Axiom admit : False.
+Ltac admit := exfalso; exact admit.
+
 Obligation Tactic := idtac.
 
 Module Props
@@ -343,6 +346,7 @@ induction Heq; [apply t_step|eapply t_trans; eassumption].
 apply HR; assumption.
 Qed.
 
+(*
 Section Decide_acc.
 
 Variable elt : Type.
@@ -383,7 +387,8 @@ Let R {elt} (g : UMap.t elt) (u v : {u | UMap.In u g}) :=
 
 Lemma decide_acc_spec : forall g u (p : UMap.In u g),
   if decide_acc g u return Type then Acc (R g) (exist _ u p) else {v | clos_trans _ (R g) v v}.
-
+Proof.
+Admitted.
 
 Program Definition decide_acc g u :
   (Acc (flip (rel_step g)) u) + {v | clos_trans _ (rel_step g) v v} :=
@@ -472,6 +477,8 @@ Qed.
 
 
 Lemma decide_wf : forall g, 
+
+*)
 
 Lemma ill_founded_has_cycle : forall g,
   ~ well_founded (rel_step g) -> {u | clos_trans _ (rel_step g) u u}.
