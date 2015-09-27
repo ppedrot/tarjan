@@ -480,7 +480,6 @@ Lemma decide_wf : forall g,
 
 *)
 
-(*
 Lemma ill_founded_has_cycle : forall g,
   ~ well_founded (rel_step g) -> {u | clos_trans _ (rel_step g) u u}.
 Proof.
@@ -499,12 +498,16 @@ assert (Hwf := Wf_nat.lt_wf size).
 revert g Hg Heqsize; induction Hwf as [size _ IH]; intros g Hg Heq; subst.
 remember (partition (is_source g) g) as p; symmetry in Heqp.
 destruct p as [g1 g2].
-apply partition_Partition in Heqp; [|now intuition].
 remember (UMap.is_empty g1) as b; symmetry in Heqb; destruct b.
-+ assert (H : forall u v, UMap.In u g -> rel_step g v u -> False).
-  { admit. }
-  elim Hg; clear - H; constructor; intros v Hv.
-  admit.
++ elim Hg; clear - Hf Heqp Heqb.
+  intros u; constructor; intros v Hr; exfalso.
+  assert (Hi : exists c, UMap.MapsTo v c g).
+  { destruct Hr; intuition eauto. }
+  destruct Hi as [c Hv].
+  assert (H : UMap.MapsTo v c g /\ is_source g v c = true).
+  { split; [auto|]; unfold is_source; destruct is_rel_source; intuition eauto. }
+  assert (Hp := @partition_iff_1 _ _ (Hf g) g g1 v c).
+
 + assert (Hlt : (UMap.cardinal g1) <> 0).
   { intros Heq; rewrite <- UMapFacts.cardinal_Empty in Heq.
     apply UMap.is_empty_1 in Heq; congruence. }
